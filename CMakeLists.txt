@@ -1,0 +1,157 @@
+cmake_minimum_required(VERSION 3.5.0)
+project(http-from-scratch VERSION 0.1.0 LANGUAGES C CXX)
+
+# If Build type is not set, set it to Release
+if(NOT CMAKE_BUILD_TYPE)
+    set(CMAKE_BUILD_TYPE Release)
+endif()
+
+
+# Check if the compiler supports C++20, if not set the standard to C++17. 
+include(CheckCXXCompilerFlag)
+CHECK_CXX_COMPILER_FLAG("-std=c++20" COMPILER_SUPPORTS_CXX20)
+
+if(COMPILER_SUPPORTS_CXX20)
+    set(CMAKE_CXX_STANDARD 20)
+else()
+    # Check if the compiler supports C++17
+    CHECK_CXX_COMPILER_FLAG("-std=c++17" COMPILER_SUPPORTS_CXX17)
+
+    if(COMPILER_SUPPORTS_CXX17)
+        set(CMAKE_CXX_STANDARD 17)
+    else()
+        message(FATAL_ERROR "The compiler ${CMAKE_CXX_COMPILER} has no C++17 support. Please use a different C++ compiler.")
+    endif()
+endif()
+
+# Check if the compiler has certain header files, if not throw an error
+include(CheckIncludeFileCXX)
+CHECK_INCLUDE_FILE_CXX(iostream HAVE_IOSTREAM_H)
+if (NOT HAVE_IOSTREAM_H)
+    message(FATAL_ERROR "The compiler ${CMAKE_CXX_COMPILER} has no iostream support. Please use a different C++ compiler.")
+endif()
+CHECK_INCLUDE_FILE_CXX(string HAVE_STRING_H)
+if (NOT HAVE_STRING_H)
+    message(FATAL_ERROR "The compiler ${CMAKE_CXX_COMPILER} has no string support. Please use a different C++ compiler.")
+endif()
+CHECK_INCLUDE_FILE_CXX(vector HAVE_VECTOR_H)
+if (NOT HAVE_VECTOR_H)
+    message(FATAL_ERROR "The compiler ${CMAKE_CXX_COMPILER} has no vector support. Please use a different C++ compiler.")
+endif()
+CHECK_INCLUDE_FILE_CXX(unordered_map HAVE_UNORDERED_MAP_H)
+if (NOT HAVE_UNORDERED_MAP_H)
+    message(FATAL_ERROR "The compiler ${CMAKE_CXX_COMPILER} has no unordered_map support. Please use a different C++ compiler.")
+endif()
+CHECK_INCLUDE_FILE_CXX(memory HAVE_MEMORY_H)
+if (NOT HAVE_MEMORY_H)
+    message(FATAL_ERROR "The compiler ${CMAKE_CXX_COMPILER} has no memory support. Please use a different C++ compiler.")
+endif()
+CHECK_INCLUDE_FILE_CXX(thread HAVE_THREAD_H)
+if (NOT HAVE_THREAD_H)
+    message(FATAL_ERROR "The compiler ${CMAKE_CXX_COMPILER} has no thread support. Please use a different C++ compiler.")
+endif()
+CHECK_INCLUDE_FILE_CXX(future HAVE_FUTURE_H)
+if (NOT HAVE_FUTURE_H)
+    message(FATAL_ERROR "The compiler ${CMAKE_CXX_COMPILER} has no future support. Please use a different C++ compiler.")
+endif()
+CHECK_INCLUDE_FILE_CXX(mutex HAVE_MUTEX_H)
+if (NOT HAVE_MUTEX_H)
+    message(FATAL_ERROR "The compiler ${CMAKE_CXX_COMPILER} has no mutex support. Please use a different C++ compiler.")
+endif()
+CHECK_INCLUDE_FILE_CXX(condition_variable HAVE_CONDITION_VARIABLE_H)
+if (NOT HAVE_CONDITION_VARIABLE_H)
+    message(FATAL_ERROR "The compiler ${CMAKE_CXX_COMPILER} has no condition_variable support. Please use a different C++ compiler.")
+endif()
+CHECK_INCLUDE_FILE_CXX(functional HAVE_FUNCTIONAL_H)
+if (NOT HAVE_FUNCTIONAL_H)
+    message(FATAL_ERROR "The compiler ${CMAKE_CXX_COMPILER} has no functional support. Please use a different C++ compiler.")
+endif()
+CHECK_INCLUDE_FILE_CXX(chrono HAVE_CHRONO_H)
+if (NOT HAVE_CHRONO_H)
+    message(FATAL_ERROR "The compiler ${CMAKE_CXX_COMPILER} has no chrono support. Please use a different C++ compiler.")
+endif()
+CHECK_INCLUDE_FILE_CXX(optional HAVE_OPTIONAL_H)
+if (NOT HAVE_OPTIONAL_H)
+    message(FATAL_ERROR "The compiler ${CMAKE_CXX_COMPILER} has no optional support. Please use a different C++ compiler.")
+endif()
+
+# Check some posix headers, if not throw an error
+include(CheckIncludeFile)
+CHECK_INCLUDE_FILE(unistd.h HAVE_UNISTD_H)
+if (NOT HAVE_UNISTD_H)
+    message(FATAL_ERROR "The compiler ${CMAKE_CXX_COMPILER} has no unistd.h support. Please use a different C++ compiler.")
+endif()
+CHECK_INCLUDE_FILE(sys/types.h HAVE_SYS_TYPES_H)
+if (NOT HAVE_SYS_TYPES_H)
+    message(FATAL_ERROR "The compiler ${CMAKE_CXX_COMPILER} has no sys/types.h support. Please use a different C++ compiler.")
+endif()
+CHECK_INCLUDE_FILE(sys/socket.h HAVE_SYS_SOCKET_H)
+if (NOT HAVE_SYS_SOCKET_H)
+    message(FATAL_ERROR "The compiler ${CMAKE_CXX_COMPILER} has no sys/socket.h support. Please use a different C++ compiler.")
+endif()
+CHECK_INCLUDE_FILE(netinet/in.h HAVE_NETINET_IN_H)
+if (NOT HAVE_NETINET_IN_H)
+    message(FATAL_ERROR "The compiler ${CMAKE_CXX_COMPILER} has no netinet/in.h support. Please use a different C++ compiler.")
+endif()
+CHECK_INCLUDE_FILE(arpa/inet.h HAVE_ARPA_INET_H)
+if (NOT HAVE_ARPA_INET_H)
+    message(FATAL_ERROR "The compiler ${CMAKE_CXX_COMPILER} has no arpa/inet.h support. Please use a different C++ compiler.")
+endif()
+CHECK_INCLUDE_FILE(fcntl.h HAVE_FCNTL_H)
+if (NOT HAVE_FCNTL_H)
+    message(FATAL_ERROR "The compiler ${CMAKE_CXX_COMPILER} has no fcntl.h support. Please use a different C++ compiler.")
+endif()
+CHECK_INCLUDE_FILE(sys/epoll.h HAVE_SYS_EPOLL_H)
+if (NOT HAVE_SYS_EPOLL_H)
+    message(FATAL_ERROR "The compiler ${CMAKE_CXX_COMPILER} has no sys/epoll.h support. Please use a different C++ compiler.")
+endif()
+CHECK_INCLUDE_FILE(sys/wait.h HAVE_SYS_WAIT_H)
+if (NOT HAVE_SYS_WAIT_H)
+    message(FATAL_ERROR "The compiler ${CMAKE_CXX_COMPILER} has no sys/wait.h support. Please use a different C++ compiler.")
+endif()
+CHECK_INCLUDE_FILE(sys/mman.h HAVE_SYS_MMAN_H)
+if (NOT HAVE_SYS_MMAN_H)
+    message(FATAL_ERROR "The compiler ${CMAKE_CXX_COMPILER} has no sys/mman.h support. Please use a different C++ compiler.")
+endif()
+
+
+# Check if the compiler has some optional headers. If so, set the HAVE_XXX_H to 1
+CHECK_INCLUDE_FILE_CXX(sys/sendfile.h HAVE_SYS_SENDFILE_H)
+CHECK_INCLUDE_FILE_CXX(sys/uio.h HAVE_SYS_UIO_H)
+CHECK_INCLUDE_FILE_CXX(sys/eventfd.h HAVE_SYS_EVENTFD_H)
+CHECK_INCLUDE_FILE_CXX(sys/signalfd.h HAVE_SYS_SIGNALFD_H)
+CHECK_INCLUDE_FILE_CXX(sys/timerfd.h HAVE_SYS_TIMERFD_H)
+CHECK_INCLUDE_FILE_CXX(cstdbool HAVE_CSTDBOOL_H)
+CHECK_INCLUDE_FILE_CXX(cstdint HAVE_CSTDINT_H)
+CHECK_INCLUDE_FILE_CXX(cstddef HAVE_CSTDDEF_H)
+
+
+
+# Add these definitions to the header config file
+configure_file(${CMAKE_CURRENT_SOURCE_DIR}/config.h.in ${CMAKE_CURRENT_SOURCE_DIR}/lib/http_config.h)
+
+
+set(CMAKE_CXX_STANDARD 20)
+set(CMAKE_CXX_STANDARD_REQUIRED ON)
+set(CMAKE_CXX_EXTENSIONS ON)
+
+
+set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -O2 -Wall -Wextra -Werror -pedantic")
+
+
+# If buildd type is debug, set the flags to debug
+if(CMAKE_BUILD_TYPE STREQUAL "Debug")
+    set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -DDEBUG")
+endif()
+
+
+set(CMAKE_LIBRARY_OUTPUT_DIRECTORY ${CMAKE_BINARY_DIR}/lib)
+set(CMAKE_RUNTIME_OUTPUT_DIRECTORY ${CMAKE_BINARY_DIR}/bin)
+
+include_directories(lib)
+
+add_subdirectory(lib)
+
+add_subdirectory(blocking-http-server)
+add_subdirectory(multi-thread-http-server)
+add_subdirectory(multi-process-http-server)

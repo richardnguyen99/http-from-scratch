@@ -1,0 +1,15 @@
+{
+  "files.associations": {
+    "*.ejs": "ejs",
+    "iostream": "cpp",
+    "http_core.h": "cpp",
+    "http_client.h": "cpp",
+    "http_server.h": "cpp",
+    "http_request.h": "cpp",
+    "http_response.h": "cpp",
+    "http_config.h": "cpp",
+    "cstdbool": "cpp",
+    "cstdint": "cpp",
+    "cstddef": "cpp"
+  }
+}
