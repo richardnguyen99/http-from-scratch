@@ -20,10 +20,11 @@ void
 blocking_http_server::start()
 {
 #ifdef DEBUG
-    std::cout << "blocking_http_server::start() - Server is listening on "
-              << "http://localhost:" << this->__port << std::endl;
-
+    std::cout << "blocking_http_server::start() - ";
 #endif
+
+    std::cout << "Server is listening on "
+              << "http://localhost:" << this->__port << std::endl;
 
     for (;;)
     {
