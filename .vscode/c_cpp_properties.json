@@ -4,14 +4,15 @@
       "name": "Linux",
       "includePath": [
         "${default}",
-        "/usr/include",
-        "/usr/local/include",
-        "/usr/include/c++/",
-        "./lib"
+        "${workspaceFolder}/lib/**/*",
+        "${workspaceFolder}/include/**/*"
       ],
       "defines": [],
-      "compilerPath": "/usr/local/bin/clang",
-      "intelliSenseMode": "linux-clang-x64"
+      "compilerPath": "/usr/bin/c++",
+      "intelliSenseMode": "linux-gcc-x64",
+      "configurationProvider": "ms-vscode.cmake-tools",
+      "cStandard": "c23",
+      "cppStandard": "gnu++20"
     }
   ],
   "version": 4

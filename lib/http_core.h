@@ -2,7 +2,7 @@
 #define __HTTP_CORE_H__ 1
 
 // From cmake config to check whether a header is available
-#include <http_config.h>
+#include "http_config.h"
 
 // Core C++ headers
 #include <chrono>

@@ -1,10 +1,18 @@
 #include <http_core.h>
-#include <iostream>
+#include <http_server.h>
+
+#include "blocking_http_server.h"
 
 int
 main()
 {
-    std::cout << "(" HTTP_SERVER_NAME ") Blocking HTTP Server: Hello, World!"
-              << std::endl;
+    hfs::http_server_base *server = new hfs::blocking_http_server();
+    server->listen(7000);
+    server->start();
+    server->register_handler(
+        "/", "GET", []() { std::cout << "Hello, World!" << std::endl; }
+    );
+
+    delete server;
     return 0;
 }
