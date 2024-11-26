@@ -8,6 +8,8 @@
         "-fdiagnostics-color=always",
         "-g",
         "-O0",
+        "-std=gnu++20",
+        "-DDEBUG",
         "-I${fileDirname}/../lib",
         "${fileDirname}/*.cpp",
         "${fileDirname}/../lib/*.cpp",

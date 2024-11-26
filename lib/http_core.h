@@ -7,6 +7,7 @@
 // Core C++ headers
 #include <chrono>
 #include <condition_variable>
+#include <cstring>
 #include <functional>
 #include <future>
 #include <iostream>
@@ -53,6 +54,7 @@ typedef long ssize_t
 #define HTTP_SERVER_NAME          "http-from-scratch server"
 #define HTTP_SERVER_VERSION       "HTTP/1.1"
 #define HTTP_SERVER__DEFAULT_PORT 7000
+#define HTTP_BUFSZ                8192 // 8KB
 
 typedef enum http_status_code
 {

@@ -16,7 +16,7 @@ public:
     start() override;
 
     void
-    listen(int port) override;
+    listen(int port, int backlog = 128, int optval = 1) override;
 
     void
     register_handler(

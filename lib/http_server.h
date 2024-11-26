@@ -17,13 +17,20 @@ public:
     start() = 0;
 
     virtual void
-    listen(int port) = 0;
+    listen(int port, int backlog = 128, int optval = 0) = 0;
 
     virtual void
     register_handler(
         const std::string &path, const std::string &method,
         std::function<void()> handler
     ) = 0;
+
+protected:
+    struct addrinfo __hints;
+    int __port;
+    int __socket_flag;
+    int __socket;
+    int __backlog;
 };
 } // namespace hfs
 

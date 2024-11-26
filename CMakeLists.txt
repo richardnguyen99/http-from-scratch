@@ -74,6 +74,10 @@ CHECK_INCLUDE_FILE_CXX(optional HAVE_OPTIONAL_H)
 if (NOT HAVE_OPTIONAL_H)
     message(FATAL_ERROR "The compiler ${CMAKE_CXX_COMPILER} has no optional support. Please use a different C++ compiler.")
 endif()
+CHECK_INCLUDE_FILE_CXX(cstring HAVE_CSTRING_H)
+if (NOT HAVE_CSTRING_H)
+    message(FATAL_ERROR "The compiler ${CMAKE_CXX_COMPILER} has no cstring support. Please use a different C++ compiler.")
+endif()
 
 # Check some posix headers, if not throw an error
 include(CheckIncludeFile)

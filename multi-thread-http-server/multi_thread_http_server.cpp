@@ -21,10 +21,14 @@ multi_thread_http_server::start()
 }
 
 void
-multi_thread_http_server::listen(int port)
+multi_thread_http_server::listen(int port, int backlog, int optval)
 {
     std::cout << "multi_thread_http_server::listen(" << port << ")"
               << std::endl;
+
+    this->__port        = port;
+    this->__backlog     = backlog;
+    this->__socket_flag = optval;
 }
 
 void
