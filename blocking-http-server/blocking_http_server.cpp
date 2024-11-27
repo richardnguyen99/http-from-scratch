@@ -67,8 +67,9 @@ blocking_http_server::start()
 
         for (total_recv = 0; total_recv < HTTP_BUFSZ;)
         {
-            // Read the request in a loop because
-            brecv = recv(client_socket, buf, HTTP_BUFSZ, 0);
+            // Read the request in a loop because the request may not be read
+            // fully in a single read call.
+            brecv = recv(client_socket, buf + total_recv, HTTP_BUFSZ, 0);
 
             if (brecv == -1)
             {
@@ -84,7 +85,7 @@ blocking_http_server::start()
             total_recv += brecv;
             buf[total_recv] = '\0';
 
-            if (buf[total_recv - 1] == '\n' && buf[total_recv - 2] == '\r')
+            if (std::strstr(buf, "\r\n\r\n") != nullptr)
             {
                 break;
             }
@@ -94,11 +95,23 @@ blocking_http_server::start()
         std::cout << "Received " << total_recv << " bytes" << std::endl;
 #endif
 
-        this->__req = std::make_unique<http_request>(buf, total_recv);
+        try
+        {
+            this->__req = std::make_unique<http_request>(buf, total_recv);
+        }
+        catch (const std::runtime_error &e)
+        {
+            std::cerr << "http_request::constructor(buf, len): " << e.what()
+                      << std::endl;
+
+            close(client_socket);
+            continue;
+        }
 
         if (this->__req == nullptr)
         {
-            std::cerr << "Failed to parse the request" << std::endl;
+            std::cerr << "http_request: Failed to parse the request"
+                      << std::endl;
             close(client_socket);
             continue;
         }

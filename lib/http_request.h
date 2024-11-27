@@ -23,6 +23,7 @@ public:
     ~http_request();
 
 private:
+    http_status_code_t __status;
     std::string __method;
     std::string __path;
     std::string __version;

@@ -5,6 +5,7 @@
 #include "http_config.h"
 
 // Core C++ headers
+#include <algorithm>
 #include <chrono>
 #include <condition_variable>
 #include <cstring>

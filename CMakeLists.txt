@@ -26,6 +26,10 @@ endif()
 
 # Check if the compiler has certain header files, if not throw an error
 include(CheckIncludeFileCXX)
+CHECK_INCLUDE_FILE_CXX(algorithm HAVE_ALGORITHM_H)
+if (NOT HAVE_ALGORITHM_H)
+    message(FATAL_ERROR "The compiler ${CMAKE_CXX_COMPILER} has no algorithm support. Please use a different C++ compiler.")
+endif()
 CHECK_INCLUDE_FILE_CXX(iostream HAVE_IOSTREAM_H)
 if (NOT HAVE_IOSTREAM_H)
     message(FATAL_ERROR "The compiler ${CMAKE_CXX_COMPILER} has no iostream support. Please use a different C++ compiler.")
