@@ -3,8 +3,11 @@
 
 #include <http_core.h>
 
-class HttpResponse
+namespace hfs
+{
+class http_response
 {
 };
+} // namespace hfs
 
 #endif // __HTTP_RESPONSE_H__

@@ -2,6 +2,8 @@
 #define __HFS_BLOCKING_HTTP_SERVER_H__ 1
 
 #include <http_core.h>
+#include <http_request.h>
+#include <http_response.h>
 #include <http_server.h>
 
 namespace hfs
@@ -23,7 +25,12 @@ public:
         const std::string &path, const std::string &method,
         std::function<void()> handler
     ) override;
+
+private:
+    std::unique_ptr<hfs::http_request> __req;
+    std::unique_ptr<hfs::http_response> __res;
 };
+
 } // namespace hfs
 
 #endif // __HFS_BLOCKING_HTTP_SERVER_H__

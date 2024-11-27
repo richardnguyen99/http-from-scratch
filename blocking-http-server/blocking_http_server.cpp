@@ -2,7 +2,7 @@
 
 namespace hfs
 {
-blocking_http_server::blocking_http_server()
+blocking_http_server::blocking_http_server() : __req(nullptr), __res(nullptr)
 {
 #ifdef DEBUG
     std::cout << "blocking_http_server::blocking_http_server()" << std::endl;
@@ -93,6 +93,15 @@ blocking_http_server::start()
 #ifdef DEBUG
         std::cout << "Received " << total_recv << " bytes" << std::endl;
 #endif
+
+        this->__req = std::make_unique<http_request>(buf, total_recv);
+
+        if (this->__req == nullptr)
+        {
+            std::cerr << "Failed to parse the request" << std::endl;
+            close(client_socket);
+            continue;
+        }
 
         // Prepare the response
         std::stringstream body;
