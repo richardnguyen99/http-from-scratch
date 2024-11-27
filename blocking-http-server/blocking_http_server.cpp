@@ -26,21 +26,25 @@ blocking_http_server::start()
     std::cout << "Server is listening on "
               << "http://localhost:" << this->__port << std::endl;
 
+    // The server keeps running and accepting incoming connections until an
+    // interrupt signal is received.
     for (;;)
     {
+        // Client structucture to store the client address information
         struct sockaddr_storage client_addr;
         socklen_t client_addr_size = sizeof(client_addr);
 
+        // Accept the incoming connection
         int client_socket = accept(
             this->__socket, (struct sockaddr *)&client_addr, &client_addr_size
         );
-
         if (client_socket == -1)
         {
             std::cerr << "accept: " << std::strerror(errno) << std::endl;
             continue;
         }
 
+        // Retrieve the client IP address and port number
         char client_ip[INET6_ADDRSTRLEN];
         inet_ntop(
             client_addr.ss_family,
@@ -54,6 +58,7 @@ blocking_http_server::start()
                   << std::endl;
 #endif
 
+        // Start reading the incoming request
         char buf[HTTP_BUFSZ];
         ssize_t brecv, bsent;
         std::size_t total_recv, total_sent;
@@ -62,6 +67,7 @@ blocking_http_server::start()
 
         for (total_recv = 0; total_recv < HTTP_BUFSZ;)
         {
+            // Read the request in a loop because
             brecv = recv(client_socket, buf, HTTP_BUFSZ, 0);
 
             if (brecv == -1)
@@ -88,6 +94,7 @@ blocking_http_server::start()
         std::cout << "Received " << total_recv << " bytes" << std::endl;
 #endif
 
+        // Prepare the response
         std::stringstream body;
         body << "Received: \n"
              << buf << "\n(Total " << total_recv << " bytes)\n";
@@ -100,6 +107,7 @@ blocking_http_server::start()
                  << "\r\n"
                  << body.str();
 
+        // Send the response
         for (bsent = 0, total_sent = 0; total_sent < response.str().length();)
         {
             bsent = send(
@@ -141,6 +149,7 @@ blocking_http_server::listen(int port, int backlog, int optval)
     this->__socket_flag = optval;
     this->__backlog     = backlog;
 
+    // Prepare server info
     this->__hints.ai_family   = AF_UNSPEC;   // IPv4 or IPv6
     this->__hints.ai_socktype = SOCK_STREAM; // Use TCP
     this->__hints.ai_flags    = AI_PASSIVE;  // Make the socket ready for server
@@ -150,6 +159,7 @@ blocking_http_server::listen(int port, int backlog, int optval)
     std::cout << "├── construct struct addrinfo for server" << std::endl;
 #endif
 
+    // Find address information for the server socket
     if ((ret = getaddrinfo(
              nullptr, std::to_string(port).c_str(), &this->__hints, &server_info
          )) != 0)
@@ -162,13 +172,13 @@ blocking_http_server::listen(int port, int backlog, int optval)
     std::cout << "├── finding address information for server" << std::endl;
 #endif
 
+    // Iterate through the server info and create a socket for the server
     for (struct addrinfo *p = server_info; p != nullptr; p = p->ai_next)
     {
 
 #ifdef DEBUG
         std::cout << "│   ├── create a socket for the server" << std::endl;
 #endif
-
         if ((this->__socket =
                  socket(p->ai_family, p->ai_socktype, p->ai_protocol)) == -1)
         {
