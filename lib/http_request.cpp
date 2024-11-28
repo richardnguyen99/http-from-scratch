@@ -4,22 +4,22 @@ namespace hfs
 {
 http_request::http_request()
     : __status(HTTP_STATUS_OK), __method(""), __path(""), __version(""),
-      __body(""), __headers()
+      __body(""), __headers(), __buf("")
 {
 }
 
 http_request::http_request(const std::string &buf)
     : __status(HTTP_STATUS_OK), __method(""), __path(""), __version(""),
-      __body(""), __headers()
+      __body(""), __headers(), __buf(buf)
 {
-    this->__parse(buf.c_str(), buf.length());
+    this->__parse();
 }
 
 http_request::http_request(const char *buf, size_t len)
     : __status(HTTP_STATUS_OK), __method(""), __path(""), __version(""),
-      __body(""), __headers()
+      __body(""), __headers(), __buf(buf, len)
 {
-    this->__parse(buf, len);
+    this->__parse();
 }
 
 http_request::http_request(
@@ -34,6 +34,48 @@ http_request::http_request(
 
 http_request::~http_request()
 {
+}
+
+http_status_code_t
+http_request::status() const noexcept
+{
+    return this->__status;
+}
+
+const std::string &
+http_request::method() const noexcept
+{
+    return this->__method;
+}
+
+const std::string &
+http_request::path() const noexcept
+{
+    return this->__path;
+}
+
+const std::string &
+http_request::version() const noexcept
+{
+    return this->__version;
+}
+
+const std::string &
+http_request::body() const noexcept
+{
+    return this->__body;
+}
+
+const std::string &
+http_request::header(const std::string &key) const
+{
+    auto it = this->__headers.find(key);
+    if (it == this->__headers.end())
+    {
+        throw std::out_of_range("http_request::header: Invalid header");
+    }
+
+    return it->second;
 }
 
 static bool
@@ -119,15 +161,15 @@ __parse_headers(
 }
 
 void
-http_request::__parse(const char *buf, size_t len)
+http_request::__parse()
 {
-    if (buf == nullptr || len == 0)
+    if (this->__buf.empty())
     {
         throw std::runtime_error("http_request::__parse: Invalid request");
     }
 
     std::string line;
-    std::istringstream stream(buf);
+    std::istringstream stream(this->__buf);
 
     // Parse the request line
     std::getline(stream, line);
@@ -159,26 +201,30 @@ http_request::__parse(const char *buf, size_t len)
             );
         }
     }
+}
 
-#ifdef DEBUG
-    std::cout << "\nhttp_request::__parse:\n"
-              << "├── method: " << this->__method << "\n"
-              << "├── url: " << this->__path << "\n"
-              << "├── version: " << this->__version << "\n"
-              << "└── headers:\n";
+std::ostream &
+operator<<(std::ostream &os, const http_request &req)
+{
+    os << "Req\n"
+       << "├── method: " << req.method() << "\n"
+       << "├── url: " << req.path() << "\n"
+       << "├── version: " << req.version() << "\n"
+       << "└── headers:\n";
 
     size_t i = 0;
-    for (const auto &[name, value] : this->__headers)
+    for (const auto &[name, value] : req.__headers)
     {
-        if (i++ == this->__headers.size() - 1)
+        if (i++ == req.__headers.size() - 1)
         {
-            std::cout << "    └── " << name << ": " << value << "\n";
+            os << "    └── " << name << ": " << value << "\n";
             continue;
         }
 
-        std::cout << "    ├── " << name << ": " << value << "\n";
+        os << "    ├── " << name << ": " << value << "\n";
     }
-#endif
+
+    return os;
 }
 
 } // namespace hfs

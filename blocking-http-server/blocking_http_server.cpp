@@ -147,6 +147,7 @@ blocking_http_server::start()
         }
 
 #ifdef DEBUG
+        std::cout << *(this->__req);
         std::cout << "Sent " << total_sent << " bytes" << std::endl;
 #endif
 
