@@ -35,6 +35,11 @@
 #include <netdb.h>
 #include <netinet/in.h>
 
+// UUID headers
+#ifdef HAVE_UUID_UUID_H
+#include <uuid/uuid.h>
+#endif
+
 #ifdef HAVE_CSTDBOOL_H
 #include <cstdbool>
 #else
@@ -52,6 +57,9 @@ typedef long ptrdiff_t;
 typedef unsigned long size_t;
 typedef long ssize_t
 #endif
+
+namespace hfs
+{
 
 #define HTTP_SERVER_NAME          "http-from-scratch server"
 #define HTTP_SERVER_VERSION       "HTTP/1.1"
@@ -80,5 +88,6 @@ typedef enum http_status_code
     HTTP_STATUS_BAD_GATEWAY           = 502,
     HTTP_STATUS_SERVICE_UNAVAILABLE   = 503,
 } http_status_code_t;
+} // namespace hfs
 
 #endif // __HTTP_CORE_H__

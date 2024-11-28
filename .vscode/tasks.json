@@ -14,7 +14,8 @@
         "${fileDirname}/*.cpp",
         "${fileDirname}/../lib/*.cpp",
         "-o",
-        "${fileDirname}/${relativeFileDirname}.out"
+        "${fileDirname}/${relativeFileDirname}.out",
+        "-luuid"
       ],
       "options": {
         "cwd": "${fileDirname}"

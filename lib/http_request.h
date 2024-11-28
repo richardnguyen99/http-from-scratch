@@ -2,6 +2,7 @@
 #define __HTTP_REQUEST_H__ 1
 
 #include <http_core.h>
+#include <http_uuid.h>
 
 namespace hfs
 {
@@ -169,6 +170,7 @@ public:
 
 private:
     http_status_code_t __status;
+    std::string __uuid;
     std::string __method;
     std::string __path;
     std::string __version;

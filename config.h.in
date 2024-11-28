@@ -15,3 +15,5 @@
 #cmakedefine HAVE_CSTDINT_H @HAVE_CSTDINT_H@
 
 #cmakedefine HAVE_CSTDDEF_H @HAVE_CSTDDEF_H@
+
+#cmakedefine HAVE_UUID_UUID_H @HAVE_UUID_UUID_H@

@@ -6,12 +6,14 @@ http_request::http_request()
     : __status(HTTP_STATUS_OK), __method(""), __path(""), __version(""),
       __body(""), __headers(), __buf("")
 {
+    this->__uuid = http_uuid::generate(this);
 }
 
 http_request::http_request(const std::string &buf)
     : __status(HTTP_STATUS_OK), __method(""), __path(""), __version(""),
       __body(""), __headers(), __buf(buf)
 {
+    this->__uuid = http_uuid::generate(this);
     this->__parse();
 }
 
@@ -19,6 +21,7 @@ http_request::http_request(const char *buf, size_t len)
     : __status(HTTP_STATUS_OK), __method(""), __path(""), __version(""),
       __body(""), __headers(), __buf(buf, len)
 {
+    this->__uuid = http_uuid::generate(this);
     this->__parse();
 }
 
@@ -30,6 +33,7 @@ http_request::http_request(
     : __status(HTTP_STATUS_OK), __method(method), __path(path),
       __version(version), __body(body), __headers(headers)
 {
+    this->__uuid = http_uuid::generate(this);
 }
 
 http_request::~http_request()
@@ -206,7 +210,7 @@ http_request::__parse()
 std::ostream &
 operator<<(std::ostream &os, const http_request &req)
 {
-    os << "Req\n"
+    os << "Req(id = " << req.__uuid << ")\n"
        << "├── method: " << req.method() << "\n"
        << "├── url: " << req.path() << "\n"
        << "├── version: " << req.version() << "\n"
