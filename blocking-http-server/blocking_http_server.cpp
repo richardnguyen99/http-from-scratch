@@ -116,26 +116,24 @@ blocking_http_server::start()
             continue;
         }
 
-        // Prepare the response
-        std::stringstream body;
-        body << "Received: \n"
-             << buf << "\n(Total " << total_recv << " bytes)\n";
+        this->__res = std::make_unique<http_response>();
 
-        std::stringstream response;
-        response << "HTTP/1.1 200 OK\r\n"
-                 << "Content-Type: text/plain\r\n"
-                 << "Content-Length: " << body.str().length() << "\r\n"
-                 << "Connection: close\r\n"
-                 << "\r\n"
-                 << body.str();
+        this->__res->status(HTTP_STATUS_OK)
+            .body("<html><head><title>HTTP "
+                  "Server</title></head><body><h1>Hello, "
+                  "World!</h1></body></html>")
+            .header("Content-Type", "text/html")
+            .header("Server", HTTP_SERVER_NAME "/" HTTP_SERVER_VERSION)
+            .header("Connection", "close");
+
+        std::string response  = (*this->__res)();
+        const char *resp_buf  = response.c_str();
+        const size_t resp_len = response.length();
 
         // Send the response
-        for (bsent = 0, total_sent = 0; total_sent < response.str().length();)
+        for (bsent = 0, total_sent = 0; total_sent < resp_len;)
         {
-            bsent = send(
-                client_socket, response.str().c_str() + bsent,
-                response.str().length() - bsent, 0
-            );
+            bsent = send(client_socket, resp_buf + bsent, resp_len - bsent, 0);
 
             if (bsent == -1)
             {
