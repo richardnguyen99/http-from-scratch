@@ -181,6 +181,12 @@ private:
 
     void
     __parse();
+
+    void
+    __parse_request_line(const std::string &request_line);
+
+    void
+    __parse_headers(const std::string &header_line);
 };
 } // namespace hfs
 

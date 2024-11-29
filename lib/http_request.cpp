@@ -100,11 +100,8 @@ __check_method(const std::string &method)
  * GET /index.html HTTP/1.1
  * POST /login HTTP/1.1
  */
-static void
-__parse_request_line(
-    const std::string &line, std::string &method, std::string &path,
-    std::string &version
-)
+void
+http_request::__parse_request_line(const std::string &line)
 {
     std::istringstream request_line(line);
 
@@ -113,23 +110,30 @@ __parse_request_line(
         throw std::runtime_error("Invalid request line: " + line);
     }
 
-    request_line >> method;
-    request_line >> path;
-    request_line >> version;
+    request_line >> this->__method;
+    request_line >> this->__path;
+    request_line >> this->__version;
 
-    if (method.empty() || path.empty() || version.empty())
+    if (this->__method.empty() || this->__path.empty() ||
+        this->__version.empty())
     {
-        throw std::runtime_error("Invalid request line: " + method);
+        throw std::runtime_error("Invalid request line: " + this->__method);
     }
 
-    if (!__check_method(method))
+    if (!__check_method(this->__method))
     {
-        throw std::runtime_error("Unsupported request method: " + method);
+        this->__status = HTTP_STATUS_NOT_IMPLEMENTED;
+        throw std::runtime_error(
+            "Unsupported request this->__method: " + this->__method
+        );
     }
 
-    if (version != HTTP_SERVER_VERSION)
+    if (this->__version != HTTP_SERVER_VERSION)
     {
-        throw std::runtime_error("Unsupported HTTP version: " + version);
+        this->__status = HTTP_STATUS_HTTP_VERSION_NOT_SUPPORTED;
+        throw std::runtime_error(
+            "Unsupported HTTP this->__version: " + this->__version
+        );
     }
 }
 
@@ -137,11 +141,8 @@ __parse_request_line(
  * @brief HTTP RFC 2616 Section 5.3 - Request Header Fields
  *
  */
-static void
-__parse_headers(
-    const std::string &line,
-    std::unordered_map<std::string, std::string> &headers
-)
+void
+http_request::__parse_headers(const std::string &line)
 {
     // Perform a search for the colon character
     auto pos = line.find(':');
@@ -161,7 +162,7 @@ __parse_headers(
         std::remove_if(value.begin(), value.end(), ::isspace), value.end()
     );
 
-    headers[name] = value;
+    this->__headers[name] = value;
 }
 
 void
@@ -169,6 +170,7 @@ http_request::__parse()
 {
     if (this->__buf.empty())
     {
+        this->__status = HTTP_STATUS_BAD_REQUEST;
         throw std::runtime_error("http_request::__parse: Invalid request");
     }
 
@@ -180,12 +182,16 @@ http_request::__parse()
 
     try
     {
-        __parse_request_line(
-            line, this->__method, this->__path, this->__version
-        );
+        this->__parse_request_line(line);
     }
     catch (const std::runtime_error &e)
     {
+        // In case of an unset error, set the status to `400 Bad Request`.
+        if (this->__status == HTTP_STATUS_OK)
+        {
+            this->__status = HTTP_STATUS_BAD_REQUEST;
+        }
+
         throw std::runtime_error(
             "http_request::__parse: " + std::string(e.what())
         );
@@ -196,10 +202,16 @@ http_request::__parse()
     {
         try
         {
-            __parse_headers(line, this->__headers);
+            this->__parse_headers(line);
         }
         catch (const std::runtime_error &e)
         {
+            // In case of an unset error, set the status to `400 Bad Request`.
+            if (this->__status == HTTP_STATUS_OK)
+            {
+                this->__status = HTTP_STATUS_BAD_REQUEST;
+            }
+
             throw std::runtime_error(
                 "http_request::__parse: " + std::string(e.what())
             );
