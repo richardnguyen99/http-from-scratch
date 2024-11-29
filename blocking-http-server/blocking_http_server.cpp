@@ -150,7 +150,6 @@ blocking_http_server::start()
         std::cout << *(this->__req);
         std::cout << "Sent " << total_sent << " bytes" << std::endl;
 #endif
-
         close(client_socket);
     }
 }

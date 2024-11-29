@@ -9,6 +9,7 @@
     "http_response.h": "cpp",
     "http_config.h": "cpp",
     "http_uuid.h": "cpp",
+    "http_router.h": "cpp",
     "blocking_http_server.h": "cpp",
     "multi_process_http_server.h": "cpp",
     "multi_thread_http_server.h": "cpp",

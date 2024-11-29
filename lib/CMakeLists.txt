@@ -1,5 +1,12 @@
 # add source files
-file(GLOB LIBHTTP_SOURCES "*.cpp")
+set(LIBHTTP_SOURCES
+    http_client.cpp
+    http_server.cpp
+    http_request.cpp
+    http_response.cpp
+    http_router.cpp
+    http_uuid.cpp
+)   
 
 add_library(http-lib SHARED ${LIBHTTP_SOURCES})
 target_include_directories(http-lib PUBLIC ${CMAKE_CURRENT_SOURCE_DIR})
