@@ -82,6 +82,12 @@ http_request::header(const std::string &key) const
     return it->second;
 }
 
+const std::string &
+http_request::uuid() const noexcept
+{
+    return this->__uuid;
+}
+
 static bool
 __check_method(const std::string &method)
 {

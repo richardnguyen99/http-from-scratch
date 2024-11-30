@@ -9,25 +9,35 @@ namespace hfs
 {
 class http_router
 {
+public:
     using route_handler_t = std::function<
         void(const hfs::http_request &req, hfs::http_response &res)>;
+
+    static void
+    not_implemented(const hfs::http_request &req, hfs::http_response &res)
+    {
+        (void)req;
+        (void)res;
+        throw std::runtime_error("Not implemented");
+    };
 
 public:
     http_router();
     ~http_router();
 
-    route_handler_t GET;
-    route_handler_t POST;
-    route_handler_t PUT;
-    route_handler_t DELETE;
-    route_handler_t PATCH;
-    route_handler_t OPTIONS;
-    route_handler_t HEAD;
-    route_handler_t TRACE;
-    route_handler_t CONNECT;
     std::string base_name;
     std::unordered_map<std::string, hfs::http_router> routes;
+    std::unordered_map<std::string, route_handler_t> handlers = {
+        {"GET",     not_implemented},
+        {"POST",    not_implemented},
+        {"PUT",     not_implemented},
+        {"DELETE",  not_implemented},
+        {"PATCH",   not_implemented},
+        {"OPTIONS", not_implemented},
+        {"HEAD",    not_implemented},
+        {"TRACE",   not_implemented},
+        {"CONNECT", not_implemented},
+    };
 };
-
 } // namespace hfs
 #endif // __HTTP_ROUTE_H__

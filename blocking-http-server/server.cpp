@@ -8,10 +8,29 @@ main()
 {
     hfs::http_server_base *server = new hfs::blocking_http_server();
     server->listen(7000);
-    server->start();
+
     server->register_handler(
-        "/", "GET", []() { std::cout << "Hello, World!" << std::endl; }
+        "/", "GET",
+        [](const hfs::http_request &req, hfs::http_response &res)
+        {
+            std::cout << "GET_handler" << std::endl;
+            res.status(hfs::HTTP_STATUS_OK)
+                .header("Content-Type", "text/html")
+                .header("Server", "HFS")
+                .header("Connection", "close")
+                .header("X-Request-ID", req.uuid())
+                .body("<html>"
+                      "<head>"
+                      "<title>HTTP Server</title>"
+                      "</head>"
+                      "<body>"
+                      "<h1>Hello, World!</h1>"
+                      "</body>"
+                      "</html>");
+        }
     );
+
+    server->start();
 
     delete server;
     return 0;

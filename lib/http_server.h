@@ -2,6 +2,7 @@
 #define __HTTP_SERVER_H__ 1
 
 #include "http_core.h"
+#include "http_router.h"
 
 #define HTTP_SERVER_USER_AGENT "http-from-scratch server"
 namespace hfs
@@ -22,7 +23,7 @@ public:
     virtual void
     register_handler(
         const std::string &path, const std::string &method,
-        std::function<void()> handler
+        hfs::http_router::route_handler_t handler
     ) = 0;
 
 protected:
@@ -31,6 +32,7 @@ protected:
     int __socket_flag;
     int __socket;
     int __backlog;
+    hfs::http_router __router;
 };
 } // namespace hfs
 

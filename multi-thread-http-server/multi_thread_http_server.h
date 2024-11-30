@@ -21,7 +21,7 @@ public:
     void
     register_handler(
         const std::string &path, const std::string &method,
-        std::function<void()> handler
+        hfs::http_router::route_handler_t handler
     ) override;
 };
 } // namespace hfs

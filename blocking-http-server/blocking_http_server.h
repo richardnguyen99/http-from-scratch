@@ -23,7 +23,7 @@ public:
     void
     register_handler(
         const std::string &path, const std::string &method,
-        std::function<void()> handler
+        http_router::route_handler_t handler
     ) override;
 
 private:

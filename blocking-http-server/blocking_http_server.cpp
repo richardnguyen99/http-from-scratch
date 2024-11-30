@@ -7,6 +7,9 @@ blocking_http_server::blocking_http_server() : __req(nullptr), __res(nullptr)
 #ifdef DEBUG
     std::cout << "blocking_http_server::blocking_http_server()" << std::endl;
 #endif
+
+    this->__router           = hfs::http_router();
+    this->__router.base_name = "/";
 }
 
 blocking_http_server::~blocking_http_server()
@@ -118,13 +121,63 @@ blocking_http_server::start()
 
         this->__res = std::make_unique<http_response>();
 
-        this->__res->status(HTTP_STATUS_OK)
-            .body("<html><head><title>HTTP "
-                  "Server</title></head><body><h1>Hello, "
-                  "World!</h1></body></html>")
-            .header("Content-Type", "text/html")
-            .header("Server", HTTP_SERVER_NAME "/" HTTP_SERVER_VERSION)
-            .header("Connection", "close");
+        if (this->__res == nullptr)
+        {
+            std::cerr << "http_response: Failed to create a response"
+                      << std::endl;
+            close(client_socket);
+            continue;
+        }
+
+        // Split the path by "/"
+        std::vector<std::string> path_parts;
+        std::string path = this->__req->path();
+        std::istringstream path_stream;
+
+        path_stream.str(path);
+
+        for (std::string part; std::getline(path_stream, part, '/');)
+        {
+            if (!part.empty())
+            {
+                path_parts.push_back(part);
+            }
+            else
+            {
+                path_parts.push_back("/");
+            }
+        }
+
+        // Find the handler for the path
+        hfs::http_router *router = nullptr;
+
+        for (const auto &part : path_parts)
+        {
+            std::cout << "Part: " << part << std::endl;
+            if (router == nullptr || part == "/")
+            {
+                router = &this->__router;
+            }
+            else if (router->routes.find(part) != router->routes.end())
+            {
+                router = &router->routes[part];
+            }
+        }
+
+        // Retrieve the handler for the method
+        hfs::http_router::route_handler_t handler =
+            router->handlers[this->__req->method()];
+        if (handler == nullptr)
+        {
+            std::cerr << "No handler found for " << this->__req->method() << " "
+                      << this->__req->path() << std::endl;
+            close(client_socket);
+            continue;
+        }
+
+        // Call the handler
+        std::cout << "Handler address: " << &handler << std::endl;
+        handler(*this->__req, *this->__res);
 
         std::string response  = (*this->__res)();
         const char *resp_buf  = response.c_str();
@@ -254,12 +307,21 @@ blocking_http_server::listen(int port, int backlog, int optval)
 void
 blocking_http_server::register_handler(
     const std::string &path, const std::string &method,
-    std::function<void()> handler
+    hfs::http_router::route_handler_t handler
 )
 {
     std::cout << "blocking_http_server::register_handler(" << path << ", "
               << method << ")" << std::endl;
 
-    handler();
+    if (this->__router.handlers.find(method) == this->__router.handlers.end())
+    {
+        throw std::runtime_error("Invalid HTTP method");
+    }
+
+    // Register the handler with the router
+    this->__router.handlers[method] = handler;
+
+    // Register the path with the router
+    this->__router.routes[path] = hfs::http_router();
 }
 } // namespace hfs

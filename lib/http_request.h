@@ -159,6 +159,14 @@ public:
     header(const std::string &key) const;
 
     /**
+     * @brief Retrieve the UUID of the request.
+     *
+     * @return `const std::string&`
+     */
+    const std::string &
+    uuid() const noexcept;
+
+    /**
      * @brief Print the request to the output stream.
      *
      * @param os Standard output stream.

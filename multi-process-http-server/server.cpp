@@ -7,7 +7,13 @@ main()
     server->listen(7000);
     server->start();
     server->register_handler(
-        "/", "GET", []() { std::cout << "Hello, World!" << std::endl; }
+        "/", "GET",
+        [](const hfs::http_request &req, hfs::http_response &res)
+        {
+            (void)req;
+            (void)res;
+            std::cout << "Hello, World!" << std::endl;
+        }
     );
 
     delete server;
