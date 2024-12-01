@@ -13,20 +13,21 @@ main()
         "/", "GET",
         [](const hfs::http_request &req, hfs::http_response &res)
         {
-            std::cout << "GET_handler" << std::endl;
+            std::ifstream f("../public/pages/index.html");
+            std::string body(
+                (std::istreambuf_iterator<char>(f)),
+                std::istreambuf_iterator<char>()
+            );
+
             res.status(hfs::HTTP_STATUS_OK)
                 .header("Content-Type", "text/html")
+                .header("Content-Length", std::to_string(body.length()))
+                .header("X-Request-ID", req.uuid())
                 .header("Server", "HFS")
                 .header("Connection", "close")
-                .header("X-Request-ID", req.uuid())
-                .body("<html>"
-                      "<head>"
-                      "<title>HTTP Server</title>"
-                      "</head>"
-                      "<body>"
-                      "<h1>Hello, World!</h1>"
-                      "</body>"
-                      "</html>");
+                .body(body);
+
+            f.close();
         }
     );
 

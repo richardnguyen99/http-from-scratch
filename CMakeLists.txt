@@ -86,6 +86,10 @@ CHECK_INCLUDE_FILE_CXX(cstring HAVE_CSTRING_H)
 if (NOT HAVE_CSTRING_H)
     message(FATAL_ERROR "The compiler ${CMAKE_CXX_COMPILER} has no cstring support. Please use a different C++ compiler.")
 endif()
+CHECK_INCLUDE_FILE_CXX(fstream HAVE_FSTREAM_H)
+if (NOT HAVE_FSTREAM_H)
+    message(FATAL_ERROR "The compiler ${CMAKE_CXX_COMPILER} has no fstream support. Please use a different C++ compiler.")
+endif()
 
 # Check some posix headers, if not throw an error
 include(CheckIncludeFile)
@@ -160,6 +164,9 @@ endif()
 
 set(CMAKE_LIBRARY_OUTPUT_DIRECTORY ${CMAKE_BINARY_DIR}/lib)
 set(CMAKE_RUNTIME_OUTPUT_DIRECTORY ${CMAKE_BINARY_DIR}/bin)
+
+# Copy public folder to the build directory
+file(COPY public DESTINATION ${CMAKE_BINARY_DIR})
 
 include_directories(lib)
 
