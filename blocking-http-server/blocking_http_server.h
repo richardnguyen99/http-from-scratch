@@ -32,6 +32,9 @@ public:
 private:
     std::unique_ptr<hfs::http_request> __req;
     std::unique_ptr<hfs::http_response> __res;
+
+    int
+    __server_static(int client_socket);
 };
 
 } // namespace hfs

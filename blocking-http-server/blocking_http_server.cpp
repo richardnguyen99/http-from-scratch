@@ -178,31 +178,8 @@ blocking_http_server::start()
         // Retrieve the handler for the method
         if (is_static)
         {
-            std::string file_path = this->__static_path + this->__req->path();
-            std::filesystem::path file(file_path);
-
-            if (!std::filesystem::exists(file))
-            {
-                std::cerr << "File not found: " << file_path << std::endl;
-                close(client_socket);
+            if (this->__server_static(client_socket) == -1)
                 continue;
-            }
-
-            std::ifstream f(file_path);
-            std::string body(
-                (std::istreambuf_iterator<char>(f)),
-                std::istreambuf_iterator<char>()
-            );
-
-            this->__res->status(HTTP_STATUS_OK)
-                .header("Content-Type", "text/html")
-                .header("Content-Length", std::to_string(body.length()))
-                .header("X-Request-ID", this->__req->uuid())
-                .header("Server", "HFS")
-                .header("Connection", "close")
-                .body(body);
-
-            f.close();
         }
         else
         {
@@ -217,7 +194,20 @@ blocking_http_server::start()
 
             // Call the handler
             handler(*this->__req, *this->__res);
+
+            this->__res->header(
+                "Cache-Control", "private, must-revalidate, max-age=0"
+            );
         }
+
+        // Prepare response header for server
+        this->__res
+            ->header(
+                "Server", std::string(hfs::HTTP_SERVER_NAME) + "/" +
+                              std::string(hfs::HTTP_SERVER_VERSION)
+            )
+            .header("Connection", "close")
+            .header("X-Request-ID", this->__req->uuid());
 
         std::string response  = (*this->__res)();
         const char *resp_buf  = response.c_str();
@@ -376,6 +366,34 @@ blocking_http_server::register_static(const std::string &path)
 
     this->__static_path = path;
     this->__static_dir  = std::filesystem::directory_entry(static_dir);
+}
+
+int
+blocking_http_server::__server_static(int client_socket)
+{
+    std::string file_path = this->__static_path + this->__req->path();
+    std::filesystem::path file(file_path);
+
+    if (!std::filesystem::exists(file))
+    {
+        std::cerr << "File not found: " << file_path << std::endl;
+        close(client_socket);
+        return -1;
+    }
+
+    std::ifstream f(file_path);
+    std::string body(
+        (std::istreambuf_iterator<char>(f)), std::istreambuf_iterator<char>()
+    );
+
+    this->__res->status(HTTP_STATUS_OK)
+        .header("Content-Type", "application/octet-stream")
+        .header("Cache-Control", "public, max-age=31536000")
+        .body(body);
+
+    f.close();
+
+    return 0;
 }
 
 } // namespace hfs

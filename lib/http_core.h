@@ -63,8 +63,8 @@ typedef long ssize_t
 namespace hfs
 {
 
-static constexpr const char *HTTP_SERVER_NAME    = "http-from-scratch server";
-static constexpr const char *HTTP_SERVER_VERSION = "HTTP/1.1";
+static constexpr const char *HTTP_SERVER_NAME          = "hfs";
+static constexpr const char *HTTP_SERVER_VERSION       = "HTTP/1.1";
 static constexpr std::size_t HTTP_SERVER__DEFAULT_PORT = 7000;
 static constexpr std::size_t HTTP_BUFSZ                = 8192; // 8KB
 
