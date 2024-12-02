@@ -2,6 +2,7 @@
 
 namespace hfs
 {
+
 blocking_http_server::blocking_http_server() : __req(nullptr), __res(nullptr)
 {
 #ifdef DEBUG
@@ -10,6 +11,10 @@ blocking_http_server::blocking_http_server() : __req(nullptr), __res(nullptr)
 
     this->__router           = hfs::http_router();
     this->__router.base_name = "/";
+    this->__static_path      = "../public";
+    this->__static_dir       = std::filesystem::directory_entry(
+        std::filesystem::path(this->__static_path)
+    );
 }
 
 blocking_http_server::~blocking_http_server()
@@ -149,11 +154,12 @@ blocking_http_server::start()
         }
 
         // Find the handler for the path
-        hfs::http_router *router = nullptr;
+        bool is_static                            = false;
+        hfs::http_router *router                  = nullptr;
+        hfs::http_router::route_handler_t handler = nullptr;
 
         for (const auto &part : path_parts)
         {
-            std::cout << "Part: " << part << std::endl;
             if (router == nullptr || part == "/")
             {
                 router = &this->__router;
@@ -161,23 +167,57 @@ blocking_http_server::start()
             else if (router->routes.find(part) != router->routes.end())
             {
                 router = &router->routes[part];
+                // Find in the static files
+            }
+            else
+            {
+                is_static = true;
             }
         }
 
         // Retrieve the handler for the method
-        hfs::http_router::route_handler_t handler =
-            router->handlers[this->__req->method()];
-        if (handler == nullptr)
+        if (is_static)
         {
-            std::cerr << "No handler found for " << this->__req->method() << " "
-                      << this->__req->path() << std::endl;
-            close(client_socket);
-            continue;
-        }
+            std::string file_path = this->__static_path + this->__req->path();
+            std::filesystem::path file(file_path);
 
-        // Call the handler
-        std::cout << "Handler address: " << &handler << std::endl;
-        handler(*this->__req, *this->__res);
+            if (!std::filesystem::exists(file))
+            {
+                std::cerr << "File not found: " << file_path << std::endl;
+                close(client_socket);
+                continue;
+            }
+
+            std::ifstream f(file_path);
+            std::string body(
+                (std::istreambuf_iterator<char>(f)),
+                std::istreambuf_iterator<char>()
+            );
+
+            this->__res->status(HTTP_STATUS_OK)
+                .header("Content-Type", "text/html")
+                .header("Content-Length", std::to_string(body.length()))
+                .header("X-Request-ID", this->__req->uuid())
+                .header("Server", "HFS")
+                .header("Connection", "close")
+                .body(body);
+
+            f.close();
+        }
+        else
+        {
+            handler = router->handlers[this->__req->method()];
+            if (handler == nullptr)
+            {
+                std::cerr << "No handler found for " << this->__req->method()
+                          << " " << this->__req->path() << std::endl;
+                close(client_socket);
+                continue;
+            }
+
+            // Call the handler
+            handler(*this->__req, *this->__res);
+        }
 
         std::string response  = (*this->__res)();
         const char *resp_buf  = response.c_str();
@@ -324,4 +364,18 @@ blocking_http_server::register_handler(
     // Register the path with the router
     this->__router.routes[path] = hfs::http_router();
 }
+
+void
+blocking_http_server::register_static(const std::string &path)
+{
+    std::filesystem::path static_dir(path);
+    if (!std::filesystem::exists(static_dir))
+    {
+        throw std::runtime_error("Directory does not exist");
+    }
+
+    this->__static_path = path;
+    this->__static_dir  = std::filesystem::directory_entry(static_dir);
+}
+
 } // namespace hfs

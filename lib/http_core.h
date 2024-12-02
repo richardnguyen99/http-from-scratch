@@ -9,6 +9,7 @@
 #include <chrono>
 #include <condition_variable>
 #include <cstring>
+#include <filesystem>
 #include <fstream>
 #include <functional>
 #include <future>
@@ -62,10 +63,10 @@ typedef long ssize_t
 namespace hfs
 {
 
-#define HTTP_SERVER_NAME          "http-from-scratch server"
-#define HTTP_SERVER_VERSION       "HTTP/1.1"
-#define HTTP_SERVER__DEFAULT_PORT 7000
-#define HTTP_BUFSZ                8192 // 8KB
+static constexpr const char *HTTP_SERVER_NAME    = "http-from-scratch server";
+static constexpr const char *HTTP_SERVER_VERSION = "HTTP/1.1";
+static constexpr std::size_t HTTP_SERVER__DEFAULT_PORT = 7000;
+static constexpr std::size_t HTTP_BUFSZ                = 8192; // 8KB
 
 typedef enum http_status_code
 {

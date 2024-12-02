@@ -23,6 +23,9 @@ public:
         const std::string &path, const std::string &method,
         hfs::http_router::route_handler_t handler
     ) override;
+
+    void
+    register_static(const std::string &path) override;
 };
 } // namespace hfs
 

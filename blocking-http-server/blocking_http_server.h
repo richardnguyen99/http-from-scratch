@@ -26,6 +26,9 @@ public:
         http_router::route_handler_t handler
     ) override;
 
+    void
+    register_static(const std::string &path) override;
+
 private:
     std::unique_ptr<hfs::http_request> __req;
     std::unique_ptr<hfs::http_response> __res;

@@ -26,12 +26,17 @@ public:
         hfs::http_router::route_handler_t handler
     ) = 0;
 
+    virtual void
+    register_static(const std::string &path) = 0;
+
 protected:
     struct addrinfo __hints;
     int __port;
     int __socket_flag;
     int __socket;
     int __backlog;
+    std::string __static_path;
+    std::filesystem::directory_entry __static_dir;
     hfs::http_router __router;
 };
 } // namespace hfs

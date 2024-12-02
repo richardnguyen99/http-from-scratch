@@ -90,6 +90,10 @@ CHECK_INCLUDE_FILE_CXX(fstream HAVE_FSTREAM_H)
 if (NOT HAVE_FSTREAM_H)
     message(FATAL_ERROR "The compiler ${CMAKE_CXX_COMPILER} has no fstream support. Please use a different C++ compiler.")
 endif()
+CHECK_INCLUDE_FILE_CXX(filesystem HAVE_FILESYSTEM_H)
+if (NOT HAVE_FILESYSTEM_H)
+    message(FATAL_ERROR "The compiler ${CMAKE_CXX_COMPILER} has no filesystem support. Please use a different C++ compiler.")
+endif()
 
 # Check some posix headers, if not throw an error
 include(CheckIncludeFile)

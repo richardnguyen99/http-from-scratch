@@ -41,4 +41,11 @@ multi_thread_http_server::register_handler(
     std::cout << "multi_thread_http_server::register_handler(" << path << ", "
               << method << ")" << std::endl;
 }
+
+void
+multi_thread_http_server::register_static(const std::string &path)
+{
+    std::cout << "multi_thread_http_server::register_static(" << path << ")"
+              << std::endl;
+}
 } // namespace hfs
