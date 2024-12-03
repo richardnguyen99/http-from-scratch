@@ -124,7 +124,8 @@ blocking_http_server::start()
             continue;
         }
 
-        this->__res = std::make_unique<http_response>();
+        this->__res =
+            std::make_unique<http_response>(this->__static_path + "/pages");
 
         if (this->__res == nullptr)
         {

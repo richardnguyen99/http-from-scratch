@@ -1,18 +1,29 @@
-<html>
-  <head>
-    <meta charset="utf-8" />
-    <meta name="viewport" content="width=device-width, initial-scale=1" />
-    <title>Home</title>
+{% extends "_template.html" %} {% block title %}Home{% endblock %} {% block head
+%} {{ super() }} {% endblock %} {% block content %}
+<div class="container">
+  <div class="row">
+    <div class="col">
+      <h1>Welcome to HFS</h1>
+      <p>
+        This is a simple web application that demonstrates how to use the Flask
+        web framework to build a web application. The application allows users
+        to create, read, update, and delete (CRUD) articles.
+      </p>
+      <p>The application is built using the following technologies:</p>
+      <ul>
+        <li>C++</li>
+        <li>HTML</li>
+        <li>CSS</li>
+        <li>Bootstrap</li>
+        <li>jQuery</li>
+        <li>Jinja</li>
+      </ul>
+      <p>
+        The source code for this application is available on GitHub at
+        <a href="#">here</a>
+      </p>
+    </div>
+  </div>
+</div>
 
-    <link rel="stylesheet" href="/css/bootstrap/bootstrap.min.css" />
-  </head>
-  <body>
-    <h1>Home</h1>
-    <p>Welcome to the home page!</p>
-    <a href="/about">About</a>
-
-    <script src="/js/jquery/jquery-3.7.1.min.js"></script>
-    <script src="/js/popperjs/popper.min.js"></script>
-    <script src="/js/bootstrap/bootstrap.min.js"></script>
-  </body>
-</html>
+{% endblock %} {% block scripts %} {{ super() }} {% endblock %}

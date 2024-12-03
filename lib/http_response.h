@@ -5,9 +5,11 @@
 
 namespace hfs
 {
+
 class http_response
 {
 public:
+    static inja::Environment env;
     static const int HEAD_REQUEST  = 0b0000000;
     static const int GET_REQUEST   = 0b0000001;
     static const int ETAG          = 0b0000010;
@@ -33,6 +35,9 @@ public:
     render(
         const std::string &endpoint, inja::json data, int flags = GET_REQUEST
     );
+
+    http_response &
+    render(const std::string &endpoint);
 
 private:
     http_status_code_t __status;

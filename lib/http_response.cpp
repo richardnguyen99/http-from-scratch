@@ -14,6 +14,8 @@ __current_date()
 
 namespace hfs
 {
+inja::Environment http_response::env = inja::Environment();
+
 http_response::http_response()
     : __status(HTTP_STATUS_OK), __headers(), __body(""), __page_dir("")
 {
@@ -77,8 +79,20 @@ http_response::render(const std::string &endpoint, inja::json data, int flags)
     (void)endpoint;
     (void)data;
 
-    inja::render("{{ endpoint }}", data);
+    std::string template_path = this->__page_dir + "/" + endpoint + ".html";
+
+    inja::Template temp = hfs::http_response::env.parse_template(template_path);
+    std::string body    = hfs::http_response::env.render(temp, data);
+
+    this->body(body).header("Content-Type", "text/html");
 
     return *this;
+}
+
+http_response &
+http_response::render(const std::string &endpoint)
+{
+    inja::json data;
+    return this->render(endpoint, data);
 }
 } // namespace hfs
