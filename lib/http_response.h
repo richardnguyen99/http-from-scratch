@@ -8,7 +8,13 @@ namespace hfs
 class http_response
 {
 public:
+    static const int HEAD_REQUEST  = 0b0000000;
+    static const int GET_REQUEST   = 0b0000001;
+    static const int ETAG          = 0b0000010;
+    static const int LAST_MODIFIED = 0b0000100;
+
     http_response();
+    http_response(const std::string &page_dir);
     ~http_response();
 
     std::string
@@ -23,10 +29,16 @@ public:
     http_response &
     body(const std::string &body);
 
+    http_response &
+    render(
+        const std::string &endpoint, inja::json data, int flags = GET_REQUEST
+    );
+
 private:
     http_status_code_t __status;
     std::unordered_map<std::string, std::string> __headers;
     std::string __body;
+    std::string __page_dir;
 };
 } // namespace hfs
 

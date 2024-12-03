@@ -1,6 +1,11 @@
 cmake_minimum_required(VERSION 3.5.0)
 project(http-from-scratch VERSION 0.1.0 LANGUAGES C CXX)
 
+# Set options
+option(HFS_USE_EMBEDDED_JSON "Use the shipped json header if not available on the system" ON)
+option(HFS_USE_EMBEDDED_INJA "Use the shipped inja header if not available on the system" ON)
+
+
 # If Build type is not set, set it to Release
 if(NOT CMAKE_BUILD_TYPE)
     set(CMAKE_BUILD_TYPE Release)
@@ -22,6 +27,72 @@ else()
     else()
         message(FATAL_ERROR "The compiler ${CMAKE_CXX_COMPILER} has no C++17 support. Please use a different C++ compiler.")
     endif()
+endif()
+
+# Find third party libraries
+if(HFS_USE_EMBEDDED_JSON)
+  # find_package(nlohmann_json QUIET)
+  if(NOT nlohmann_json_FOUND)
+    set(HFS_PACKAGE_USE_EMBEDDED_JSON ON)
+    add_library(nlohmann_json INTERFACE)
+    add_library(hfs::nlohmann_json ALIAS nlohmann_json)
+
+    target_include_directories(nlohmann_json INTERFACE
+      $<BUILD_INTERFACE:${CMAKE_CURRENT_SOURCE_DIR}/third-party/include>
+      $<INSTALL_INTERFACE:${HFS_INSTALL_INCLUDE_DIR}/nlohmann_json>
+    )
+
+    target_compile_features(nlohmann_json INTERFACE cxx_std_17)
+    install(TARGETS nlohmann_json EXPORT injaTargets)
+    set(HFS_SELECTED_JSON_LIBRARY "hfs::nlohmann_json")
+
+  message(STATUS "Using embedded nlohmann_json library")
+  else()
+    set(HFS_SELECTED_JSON_LIBRARY "nlohmann_json::nlohmann_json")
+  endif()
+else()
+  # If target already exists, e.g. by git submodules
+  if(TARGET nlohmann_json)
+    set(HFS_SELECTED_JSON_LIBRARY "nlohmann_json::nlohmann_json")
+
+    install(TARGETS nlohmann_json EXPORT injaTargets)
+  else()
+    find_package(nlohmann_json REQUIRED)
+    set(HFS_SELECTED_JSON_LIBRARY "nlohmann_json::nlohmann_json")
+  endif()
+endif()
+
+# Find third party libraries
+if(HFS_USE_EMBEDDED_INJA)
+  # find_package(nlohmann_json QUIET)
+  if(NOT pantor_inja_FOUND)
+    set(HFS_PACKAGE_USE_EMBEDDED_INJA ON)
+    add_library(pantor_inja INTERFACE)
+    add_library(hfs::pantor_inja ALIAS pantor_inja)
+
+    target_include_directories(pantor_inja INTERFACE
+      $<BUILD_INTERFACE:${CMAKE_CURRENT_SOURCE_DIR}/third-party/include>
+      $<INSTALL_INTERFACE:${HFS_INSTALL_INCLUDE_DIR}/>
+    )
+
+    target_compile_features(pantor_inja INTERFACE cxx_std_17)
+    install(TARGETS pantor_inja EXPORT injaTargets)
+    set(HFS_SELECTED_INJA_LIBRARY "hfs::pantor_inja")
+
+  message(STATUS "Using embedded pantor_inja library")
+  else()
+    set(HFS_SELECTED_INJA_LIBRARY "pantor_inja::pantor_inja")
+  endif()
+else()
+  # If target already exists, e.g. by git submodules
+  if(TARGET pantor_inja)
+    set(HFS_SELECTED_INJA_LIBRARY "pantor_inja::pantor_inja")
+
+    install(TARGETS pantor_inja EXPORT injaTargets)
+  else()
+    find_package(pantor_inja REQUIRED)
+    set(HFS_SELECTED_INJA_LIBRARY "pantor_inja::pantor_inja")
+  endif()
 endif()
 
 # Check if the compiler has certain header files, if not throw an error
@@ -132,6 +203,10 @@ endif()
 CHECK_INCLUDE_FILE(sys/mman.h HAVE_SYS_MMAN_H)
 if (NOT HAVE_SYS_MMAN_H)
     message(FATAL_ERROR "The compiler ${CMAKE_CXX_COMPILER} has no sys/mman.h support. Please use a different C++ compiler.")
+endif()
+CHECK_INCLUDE_FILE(sys/stat.h HAVE_SYS_STAT_H)
+if (NOT HAVE_SYS_STAT_H)
+    message(FATAL_ERROR "The compiler ${CMAKE_CXX_COMPILER} has no sys/stat.h support. Please use a different C++ compiler.")
 endif()
 
 

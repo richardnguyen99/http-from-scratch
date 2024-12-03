@@ -28,6 +28,7 @@
 #include <sys/epoll.h>
 #include <sys/mman.h>
 #include <sys/socket.h>
+#include <sys/stat.h>
 #include <sys/types.h>
 #include <sys/wait.h>
 #include <unistd.h>
@@ -36,6 +37,10 @@
 #include <arpa/inet.h>
 #include <netdb.h>
 #include <netinet/in.h>
+
+// Third-party headers
+#include <nlohmann/json.hpp> // For working with JSON structure
+#include <pantor/inja.hpp>   // For working with Jinja2-like templates
 
 // UUID headers
 #ifdef HAVE_UUID_UUID_H

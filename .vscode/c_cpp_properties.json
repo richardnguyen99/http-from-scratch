@@ -5,7 +5,8 @@
       "includePath": [
         "${default}",
         "${workspaceFolder}/lib/**/*",
-        "${workspaceFolder}/include/**/*"
+        "${workspaceFolder}/include/**/*",
+        "${workspaceFolder}/third-party/**/*"
       ],
       "defines": ["DEBUG", "_DEBUG"],
       "compilerPath": "/usr/bin/c++",

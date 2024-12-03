@@ -11,6 +11,7 @@
         "-std=gnu++20",
         "-DDEBUG",
         "-I${fileDirname}/../lib",
+        "-I${fileDirname}/../third-party/include",
         "${fileDirname}/*.cpp",
         "${fileDirname}/../lib/*.cpp",
         "-o",

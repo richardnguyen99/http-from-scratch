@@ -13,6 +13,9 @@
     "blocking_http_server.h": "cpp",
     "multi_process_http_server.h": "cpp",
     "multi_thread_http_server.h": "cpp",
+    "json.hpp": "cpp",
+    "nlohmann/json.hpp": "cpp",
+    "pantor/inja.hpp": "cpp",
     "cstdbool": "cpp",
     "cstdint": "cpp",
     "cstddef": "cpp",
@@ -86,6 +89,7 @@
   "C_Cpp.default.includePath": [
     "${workspaceFolder}/include/**/*",
     "${workspaceFolder}/lib/**/*",
+    "${workspaceFolder}/third-party/include/**/*",
     "/usr/include",
     "/usr/local/include"
   ]

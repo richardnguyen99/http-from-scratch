@@ -15,7 +15,12 @@ __current_date()
 namespace hfs
 {
 http_response::http_response()
-    : __status(HTTP_STATUS_OK), __headers(), __body("")
+    : __status(HTTP_STATUS_OK), __headers(), __body(""), __page_dir("")
+{
+}
+
+http_response::http_response(const std::string &page_dir)
+    : __status(HTTP_STATUS_OK), __headers(), __body(""), __page_dir(page_dir)
 {
 }
 
@@ -62,6 +67,18 @@ http_response::body(const std::string &body)
     this->__headers["Date"]           = __current_date();
 
     this->__body = body;
+    return *this;
+}
+
+http_response &
+http_response::render(const std::string &endpoint, inja::json data, int flags)
+{
+    (void)flags;
+    (void)endpoint;
+    (void)data;
+
+    inja::render("{{ endpoint }}", data);
+
     return *this;
 }
 } // namespace hfs
