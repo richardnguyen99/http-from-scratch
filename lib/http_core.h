@@ -102,7 +102,7 @@ typedef enum http_status_code
     HTTP_STATUS_HTTP_VERSION_NOT_SUPPORTED = 505,
 } http_status_code_t;
 
-inline const char *
+inline static const char *
 http_status_str(http_status_code_t status)
 {
     switch (status)
@@ -147,6 +147,54 @@ http_status_str(http_status_code_t status)
         return "Unknown";
     }
 }
+
+inline static const char *
+http_mime(const std::string &ext)
+{
+    std::cout << "ext: " << ext << std::endl;
+
+    if (ext == "html")
+        return "text/html";
+    else if (ext == "css")
+        return "text/css";
+    else if (ext == "js")
+        return "text/javascript";
+    else if (ext == "json")
+        return "application/json";
+    else if (ext == "png")
+        return "image/png";
+    else if (ext == "jpg" || ext == "jpeg")
+        return "image/jpeg";
+    else if (ext == "gif")
+        return "image/gif";
+    else if (ext == "svg")
+        return "image/svg+xml";
+    else if (ext == "ico")
+        return "image/x-icon";
+    else if (ext == "pdf")
+        return "application/pdf";
+    else if (ext == "zip")
+        return "application/zip";
+    else if (ext == "tar")
+        return "application/x-tar";
+    else if (ext == "gz")
+        return "application/gzip";
+    else if (ext == "bz2")
+        return "application/x-bzip2";
+    else if (ext == "mp3")
+        return "audio/mpeg";
+    else if (ext == "wav")
+        return "audio/wav";
+    else if (ext == "mp4")
+        return "video/mp4";
+    else if (ext == "webm")
+        return "video/webm";
+    else if (ext == "ogg")
+        return "video/ogg";
+    else
+        return "application/octet-stream";
+}
+
 } // namespace hfs
 
 #endif // __HTTP_CORE_H__

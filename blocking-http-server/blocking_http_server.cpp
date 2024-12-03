@@ -428,8 +428,10 @@ blocking_http_server::__server_static(int client_socket)
         (std::istreambuf_iterator<char>(f)), std::istreambuf_iterator<char>()
     );
 
+    std::string ext = file.extension().string().substr(1);
+
     this->__res->status(HTTP_STATUS_OK)
-        .header("Content-Type", "application/octet-stream")
+        .header("Content-Type", hfs::http_mime(ext))
         .header("Cache-Control", "public, max-age=31536000")
         .body(body);
 
