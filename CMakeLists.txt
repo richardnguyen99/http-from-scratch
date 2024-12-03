@@ -219,15 +219,87 @@ endif()
 
 
 # Check if the compiler has some optional headers. If so, set the HAVE_XXX_H to 1
-CHECK_INCLUDE_FILE_CXX(sys/sendfile.h HAVE_SYS_SENDFILE_H)
-CHECK_INCLUDE_FILE_CXX(sys/uio.h HAVE_SYS_UIO_H)
-CHECK_INCLUDE_FILE_CXX(sys/eventfd.h HAVE_SYS_EVENTFD_H)
-CHECK_INCLUDE_FILE_CXX(sys/signalfd.h HAVE_SYS_SIGNALFD_H)
-CHECK_INCLUDE_FILE_CXX(sys/timerfd.h HAVE_SYS_TIMERFD_H)
-CHECK_INCLUDE_FILE_CXX(cstdbool HAVE_CSTDBOOL_H)
-CHECK_INCLUDE_FILE_CXX(cstdint HAVE_CSTDINT_H)
-CHECK_INCLUDE_FILE_CXX(cstddef HAVE_CSTDDEF_H)
-CHECK_INCLUDE_FILE_CXX(uuid/uuid.h HAVE_UUID_UUID_H)
+CHECK_INCLUDE_FILE_CXX(sys/sendfile.h HAVE_SYS_SENDFILE)
+
+if (HAVE_SYS_SENDFILE)
+    message(STATUS "Using system sys/sendfile.h library")
+    set(HAVE_SYS_SENDFILE_H ON)
+else()
+    set(HAVE_SYS_SENDFILE_H OFF)
+endif()
+
+CHECK_INCLUDE_FILE_CXX(sys/uio.h HAVE_SYS_UIO)
+
+if (HAVE_SYS_UIO)
+    message(STATUS "Using system sys/uio.h library")
+    set(HAVE_SYS_UIO_H ON)
+else()
+    set(HAVE_SYS_UIO_H OFF)
+endif()
+
+CHECK_INCLUDE_FILE_CXX(sys/eventfd.h HAVE_SYS_EVENTFD)
+
+if (HAVE_SYS_EVENTFD)
+    message(STATUS "Using system sys/eventfd.h library")
+    set(HAVE_SYS_EVENTFD_H ON)
+else()
+    set(HAVE_SYS_EVENTFD_H OFF)
+endif()
+
+CHECK_INCLUDE_FILE_CXX(sys/signalfd.h HAVE_SYS_SIGNALFD)
+
+if (HAVE_SYS_SIGNALFD)
+    message(STATUS "Using system sys/signalfd.h library")
+    set(HAVE_SYS_SIGNALFD_H ON)
+else()
+    set(HAVE_SYS_SIGNALFD_H OFF)
+endif()
+
+CHECK_INCLUDE_FILE_CXX(sys/timerfd.h HAVE_SYS_TIMERFD)
+
+if (HAVE_SYS_TIMERFD)
+    message(STATUS "Using system sys/timerfd.h library")
+    set(HAVE_SYS_TIMERFD_H ON)
+else()
+    set(HAVE_SYS_TIMERFD_H OFF)
+endif()
+
+CHECK_INCLUDE_FILE_CXX(cstdbool HAVE_CSTDBOOL)
+
+if (HAVE_CSTDBOOL)
+    message(STATUS "Using system cstdbool library")
+    set(HAVE_CSTDBOOL_H ON)
+else()
+    set(HAVE_CSTDBOOL_H OFF)
+endif()
+
+CHECK_INCLUDE_FILE_CXX(cstdint HAVE_CSTDINT)
+
+if (HAVE_CSTDINT)
+    message(STATUS "Using system cstdint library")
+    set(HAVE_CSTDINT_H ON)
+else()
+    set(HAVE_CSTDINT_H OFF)
+endif()
+
+CHECK_INCLUDE_FILE_CXX(cstddef HAVE_CSTDDEF)
+
+if (HAVE_CSTDDEF)
+    message(STATUS "Using system cstddef library")
+    set(HAVE_CSTDDEF_H ON)
+else()
+    set(HAVE_CSTDDEF_H OFF)
+endif()
+
+CHECK_INCLUDE_FILE_CXX(uuid/uuid.h HAVE_UUID_UUID)
+
+if (HAVE_UUID_UUID)
+    message(STATUS "Using system uuid library")
+    set(HAVE_UUID_UUID_H ON)
+else()
+    message(STATUS "Using embedded uuid library")
+    set(HAVE_UUID_UUID_H OFF)
+endif()
 
 
 
