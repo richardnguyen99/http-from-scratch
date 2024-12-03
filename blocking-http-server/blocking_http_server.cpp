@@ -344,16 +344,57 @@ blocking_http_server::register_handler(
     std::cout << "blocking_http_server::register_handler(" << path << ", "
               << method << ")" << std::endl;
 
+    if (path[0] != '/')
+    {
+        throw std::runtime_error(
+            "Invalid path: " + path + " (must start with /)"
+        );
+    }
+
     if (this->__router.handlers.find(method) == this->__router.handlers.end())
     {
         throw std::runtime_error("Invalid HTTP method");
     }
 
-    // Register the handler with the router
-    this->__router.handlers[method] = handler;
+    if (path == "/")
+    {
+        // Register the handler with the router
+        this->__router.handlers[method] = handler;
 
-    // Register the path with the router
-    this->__router.routes[path] = hfs::http_router();
+        // Register the path with the router
+        this->__router.routes[path] = hfs::http_router();
+    }
+    else
+    {
+        // Split the path by "/"
+        std::vector<std::string> path_parts;
+        std::istringstream path_stream;
+
+        path_stream.str(path);
+
+        for (std::string part; std::getline(path_stream, part, '/');)
+        {
+            if (!part.empty())
+            {
+                path_parts.push_back(part);
+            }
+        }
+
+        // Register the handler with the router
+        hfs::http_router *router = &this->__router;
+
+        for (const auto &part : path_parts)
+        {
+            if (router->routes.find(part) == router->routes.end())
+            {
+                router->routes[part] = hfs::http_router();
+            }
+
+            router = &router->routes[part];
+        }
+
+        router->handlers[method] = handler;
+    }
 }
 
 void

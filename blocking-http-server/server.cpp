@@ -18,6 +18,15 @@ main()
         }
     );
 
+    server->register_handler(
+        "/about", "GET",
+        [](const hfs::http_request &req, hfs::http_response &res)
+        {
+            (void)req;
+            res.render("about");
+        }
+    );
+
     server->start();
 
     delete server;
