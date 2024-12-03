@@ -13,6 +13,7 @@
 #include <fstream>
 #include <functional>
 #include <future>
+#include <ios>
 #include <iostream>
 #include <memory>
 #include <mutex>
@@ -21,6 +22,7 @@
 #include <string>
 #include <thread>
 #include <unordered_map>
+#include <utility>
 #include <vector>
 
 // Core POSIX headers
@@ -193,6 +195,32 @@ http_mime(const std::string &ext)
         return "video/ogg";
     else
         return "application/octet-stream";
+}
+
+inline static std::string
+etag(time_t mt, std::size_t len)
+{
+    std::stringstream ss;
+    ss << "\"" << std::hex << mt << "-" << len << "\"";
+
+    return ss.str();
+}
+
+inline static std::string
+format_date(time_t t)
+{
+    struct tm tstruct;
+    char buf[80];
+    tstruct = *gmtime(&t);
+    strftime(buf, sizeof(buf), "%a, %d %b %Y %H:%M:%S %Z", &tstruct);
+
+    return buf;
+}
+
+inline static std::string
+current_date()
+{
+    return format_date(time(0));
 }
 
 } // namespace hfs

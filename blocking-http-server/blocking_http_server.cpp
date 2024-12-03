@@ -413,29 +413,59 @@ blocking_http_server::register_static(const std::string &path)
 int
 blocking_http_server::__server_static(int client_socket)
 {
+    int fd;
+    struct stat file_stat;
+    char *body            = nullptr;
     std::string file_path = this->__static_path + this->__req->path();
-    std::filesystem::path file(file_path);
 
-    if (!std::filesystem::exists(file))
+    if ((fd = open(file_path.c_str(), O_RDONLY)) == -1)
     {
-        std::cerr << "File not found: " << file_path << std::endl;
+        std::cerr << "open: " << std::strerror(errno) << std::endl;
         close(client_socket);
         return -1;
     }
 
-    std::ifstream f(file_path);
-    std::string body(
-        (std::istreambuf_iterator<char>(f)), std::istreambuf_iterator<char>()
-    );
+    if (fstat(fd, &file_stat) == -1)
+    {
+        std::cerr << "fstat: " << std::strerror(errno) << std::endl;
+        close(fd);
+        close(client_socket);
+        return -1;
+    }
 
-    std::string ext = file.extension().string().substr(1);
+    body =
+        (char *)mmap(nullptr, file_stat.st_size, PROT_READ, MAP_PRIVATE, fd, 0);
+
+    if (body == MAP_FAILED)
+    {
+        std::cerr << "mmap: " << std::strerror(errno) << std::endl;
+        close(fd);
+        close(client_socket);
+        return -1;
+    }
+    if (close(fd) == -1)
+    {
+        std::cerr << "close: " << std::strerror(errno) << std::endl;
+        close(client_socket);
+        munmap(body, file_stat.st_size);
+        return -1;
+    }
+
+    std::string ext = file_path.substr(file_path.find_last_of(".") + 1);
 
     this->__res->status(HTTP_STATUS_OK)
         .header("Content-Type", hfs::http_mime(ext))
         .header("Cache-Control", "public, max-age=31536000")
+        .header("Last-Modified", hfs::format_date(file_stat.st_mtime))
+        .header("ETag", hfs::etag(file_stat.st_mtime, file_stat.st_size))
         .body(body);
 
-    f.close();
+    if (munmap(body, file_stat.st_size) == -1)
+    {
+        std::cerr << "munmap: " << std::strerror(errno) << std::endl;
+        close(client_socket);
+        return -1;
+    }
 
     return 0;
 }
