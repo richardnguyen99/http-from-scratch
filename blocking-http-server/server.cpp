@@ -19,6 +19,31 @@ main()
     );
 
     server->register_handler(
+        "/login", "GET",
+        [](const hfs::http_request &req, hfs::http_response &res)
+        {
+            (void)req;
+            res.render("login");
+        }
+    );
+
+    server->register_handler(
+        "/login", "POST",
+        [](const hfs::http_request &req, hfs::http_response &res)
+        {
+            (void)req;
+
+            std::cout << "POST /login" << std::endl;
+
+            inja::json data;
+            data["title"]   = "Login";
+            data["message"] = "Login successful!";
+
+            res.render("login", data);
+        }
+    );
+
+    server->register_handler(
         "/about", "GET",
         [](const hfs::http_request &req, hfs::http_response &res)
         {

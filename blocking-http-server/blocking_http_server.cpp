@@ -233,6 +233,8 @@ blocking_http_server::start()
         std::cout << "Sent " << total_sent << " bytes" << std::endl;
 #endif
         close(client_socket);
+        this->__req.reset(nullptr);
+        this->__res.reset(nullptr);
     }
 }
 
