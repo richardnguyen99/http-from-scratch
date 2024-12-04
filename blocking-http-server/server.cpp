@@ -23,7 +23,11 @@ main()
         [](const hfs::http_request &req, hfs::http_response &res)
         {
             (void)req;
-            res.render("about");
+
+            inja::json data;
+            data["title"] = "About";
+
+            res.render("about", data);
         }
     );
 

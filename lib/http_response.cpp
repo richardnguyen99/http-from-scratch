@@ -75,16 +75,73 @@ http_response::body(const std::string &body)
 http_response &
 http_response::render(const std::string &endpoint, inja::json data, int flags)
 {
-    (void)flags;
-    (void)endpoint;
     (void)data;
+
+    int fd;
+    struct stat st;
+    char *buffer;
 
     std::string template_path = this->__page_dir + "/" + endpoint + ".html";
 
-    inja::Template temp = hfs::http_response::env.parse_template(template_path);
-    std::string body    = hfs::http_response::env.render(temp, data);
+    if ((fd = open(template_path.c_str(), O_RDONLY)) == -1)
+    {
+        if (errno == ENOENT)
+        {
+            this->status(HTTP_STATUS_NOT_FOUND);
+            this->body("404 Not Found");
+            return *this;
+        }
+        else
+        {
+            this->status(HTTP_STATUS_INTERNAL_SERVER_ERROR);
+            this->body("500 Internal Server Error");
+            return *this;
+        }
+    }
 
-    this->body(body).header("Content-Type", "text/html");
+    if (fstat(fd, &st) == -1)
+    {
+        this->status(HTTP_STATUS_INTERNAL_SERVER_ERROR);
+        this->body("500 Internal Server Error");
+        close(fd);
+        return *this;
+    }
+
+    buffer = (char *)mmap(0, st.st_size, PROT_READ, MAP_PRIVATE, fd, 0);
+
+    if (buffer == MAP_FAILED)
+    {
+        this->status(HTTP_STATUS_INTERNAL_SERVER_ERROR);
+        this->body("500 Internal Server Error");
+        close(fd);
+        return *this;
+    }
+
+    if (close(fd) == -1)
+    {
+        this->status(HTTP_STATUS_INTERNAL_SERVER_ERROR);
+        this->body("500 Internal Server Error");
+        munmap(buffer, st.st_size);
+        return *this;
+    }
+
+    std::string temp(buffer, st.st_size);
+    std::string body = hfs::http_response::env.render(temp, data);
+
+    if (munmap(buffer, st.st_size) == -1)
+    {
+        this->status(HTTP_STATUS_INTERNAL_SERVER_ERROR);
+        this->body("500 Internal Server Error");
+        return *this;
+    }
+
+    this->body(body).header("Content-Type", "text/html; charset=utf-8");
+
+    if (flags & ETAG)
+        this->header("ETag", "W/" + hfs::etag(st.st_mtime, st.st_size));
+
+    if (flags & LAST_MODIFIED)
+        this->header("Last-Modified", hfs::format_date(st.st_mtime));
 
     return *this;
 }

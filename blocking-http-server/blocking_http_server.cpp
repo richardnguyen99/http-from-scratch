@@ -333,6 +333,88 @@ blocking_http_server::listen(int port, int backlog, int optval)
         std::cerr << "listen: " << std::strerror(errno) << std::endl;
         return;
     }
+
+    // Initialize the environment for the HTTP response
+    hfs::http_response::env.set_include_callback(
+        [this](const std::string &path, const std::string &template_name)
+            -> inja::Template
+        {
+            std::cout << "include_callback(" << path << ", " << template_name
+                      << ")" << std::endl;
+
+            std::string template_path =
+                this->__static_path + "/pages/" + path + template_name;
+
+            int fd;
+            struct stat st;
+            char *buffer;
+
+            if ((fd = open(template_path.c_str(), O_RDONLY)) == -1)
+            {
+                if (errno == ENOENT)
+                {
+                    throw std::runtime_error(
+                        "inja::Template::env::set_include_callback not "
+                        "found: " +
+                        template_name + " (Full path: " + template_path + ")."
+                    );
+                }
+                else
+                {
+                    throw std::runtime_error(
+                        "inja::Template::env::set_include_callback internal "
+                        "error : " +
+                        template_name + " (Reason: " + strerror(errno) + ")."
+                    );
+                }
+            }
+
+            if (fstat(fd, &st) == -1)
+            {
+                close(fd);
+                throw std::runtime_error(
+                    "inja::Template::env::set_include_callback internal "
+                    "error : " +
+                    template_name + " (Reason: " + strerror(errno) + ")."
+                );
+            }
+
+            buffer = (char *)mmap(0, st.st_size, PROT_READ, MAP_PRIVATE, fd, 0);
+
+            if (buffer == MAP_FAILED)
+            {
+                close(fd);
+                throw std::runtime_error(
+                    "inja::Template::env::set_include_callback internal "
+                    "error : " +
+                    template_name + " (Reason: MAP_FAILED)."
+                );
+            }
+
+            if (close(fd) == -1)
+            {
+                munmap(buffer, st.st_size);
+                throw std::runtime_error(
+                    "inja::Template::env::set_include_callback internal "
+                    "error : " +
+                    template_name + " (Reason: " + strerror(errno) + ")."
+                );
+            }
+
+            std::string temp(buffer, st.st_size);
+
+            if (munmap(buffer, st.st_size) == -1)
+            {
+                throw std::runtime_error(
+                    "inja::Template::env::set_include_callback internal "
+                    "error : " +
+                    template_name + " (Reason: " + strerror(errno) + ")."
+                );
+            }
+
+            return hfs::http_response::env.parse(temp);
+        }
+    );
 }
 
 void

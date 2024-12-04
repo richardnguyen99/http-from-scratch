@@ -33,7 +33,8 @@ public:
 
     http_response &
     render(
-        const std::string &endpoint, inja::json data, int flags = GET_REQUEST
+        const std::string &endpoint, inja::json data,
+        int flags = GET_REQUEST | ETAG | LAST_MODIFIED
     );
 
     http_response &
