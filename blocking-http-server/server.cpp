@@ -7,7 +7,6 @@ int
 main()
 {
     hfs::http_server_base *server = new hfs::blocking_http_server();
-    server->listen(7000);
 
     server->register_handler(
         "/", "GET",
@@ -33,8 +32,6 @@ main()
         {
             (void)req;
 
-            std::cout << "POST /login" << std::endl;
-
             inja::json data;
             data["title"]   = "Login";
             data["message"] = "Login successful!";
@@ -56,6 +53,7 @@ main()
         }
     );
 
+    server->listen(7000);
     server->start();
 
     delete server;

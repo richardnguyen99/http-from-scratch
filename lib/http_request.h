@@ -167,6 +167,47 @@ public:
     uuid() const noexcept;
 
     /**
+     * @brief Retrieve the raw buffer of the request.
+     *
+     * @return const std::string&
+     */
+    const std::string &
+    data() const noexcept;
+
+    /**
+     * @brief Set the HTTP status of the request
+     *
+     * @param status - A valid status code.
+     */
+    void
+    set_status(http_status_code_t status) noexcept;
+
+    /**
+     * @brief Set the body content of the request buffer.
+     *
+     * @param body  - A string containing the body content.
+     */
+    void
+    set_body(const std::string &body) noexcept;
+
+    /**
+     * @brief Set the body content of the request buffer.
+     *
+     * @param body - A string containing the body content.
+     * @param len - The length of the body content.
+     */
+    void
+    set_body(const char *body, size_t len) noexcept;
+
+    /**
+     * @brief Set the raw buffer of the request.
+     *
+     * @param data - A string representing the raw buffer of the request.
+     */
+    void
+    set_data(const std::string &data) noexcept;
+
+    /**
      * @brief Print the request to the output stream.
      *
      * @param os Standard output stream.

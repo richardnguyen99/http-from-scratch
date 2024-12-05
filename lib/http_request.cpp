@@ -46,6 +46,12 @@ http_request::status() const noexcept
     return this->__status;
 }
 
+void
+http_request::set_status(http_status_code_t status) noexcept
+{
+    this->__status = status;
+}
+
 const std::string &
 http_request::method() const noexcept
 {
@@ -70,6 +76,18 @@ http_request::body() const noexcept
     return this->__body;
 }
 
+void
+http_request::set_body(const std::string &body) noexcept
+{
+    this->__body = body;
+}
+
+void
+http_request::set_body(const char *body, size_t len) noexcept
+{
+    this->__body = std::string(body, len);
+}
+
 const std::string &
 http_request::header(const std::string &key) const
 {
@@ -86,6 +104,18 @@ const std::string &
 http_request::uuid() const noexcept
 {
     return this->__uuid;
+}
+
+const std::string &
+http_request::data() const noexcept
+{
+    return this->__buf;
+}
+
+void
+http_request::set_data(const std::string &data) noexcept
+{
+    this->__buf = data;
 }
 
 static bool

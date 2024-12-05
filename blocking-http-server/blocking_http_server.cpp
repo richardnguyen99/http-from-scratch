@@ -67,17 +67,19 @@ blocking_http_server::start()
 #endif
 
         // Start reading the incoming request
-        char buf[HTTP_BUFSZ];
+        std::array<char, HTTP_BUFSZ + 1> buf;
         ssize_t brecv, bsent;
         std::size_t total_recv, total_sent;
+        char *body_ptr = nullptr, *endhdr_ptr = nullptr;
 
-        std::memset(buf, 0, HTTP_BUFSZ);
+        std::memset(buf.data(), 0, HTTP_BUFSZ);
 
+        // Read everything from the client socket to the buffer.
         for (total_recv = 0; total_recv < HTTP_BUFSZ;)
         {
             // Read the request in a loop because the request may not be read
             // fully in a single read call.
-            brecv = recv(client_socket, buf + total_recv, HTTP_BUFSZ, 0);
+            brecv = recv(client_socket, buf.data() + total_recv, HTTP_BUFSZ, 0);
 
             if (brecv == -1)
             {
@@ -93,8 +95,11 @@ blocking_http_server::start()
             total_recv += brecv;
             buf[total_recv] = '\0';
 
-            if (std::strstr(buf, "\r\n\r\n") != nullptr)
+            // Check if the end of the header is reached and mark the start
+            // of the body although it may not be read fully.
+            if ((endhdr_ptr = std::strstr(buf.data(), "\r\n\r\n")) != nullptr)
             {
+                body_ptr = endhdr_ptr + 4;
                 break;
             }
         }
@@ -105,7 +110,8 @@ blocking_http_server::start()
 
         try
         {
-            this->__req = std::make_unique<http_request>(buf, total_recv);
+            this->__req =
+                std::make_unique<http_request>(buf.data(), total_recv);
         }
         catch (const std::runtime_error &e)
         {
@@ -122,6 +128,80 @@ blocking_http_server::start()
                       << std::endl;
             close(client_socket);
             continue;
+        }
+
+        // Perform check on the request
+        if (this->__req->status() != HTTP_STATUS_OK)
+        {
+            std::cerr << "http_request: " << this->__req->status() << std::endl;
+            close(client_socket);
+            continue;
+        }
+
+        // If the request is a POST or PUT, parse the body
+        if (this->__req->method() == "POST" || this->__req->method() == "PUT")
+        {
+            // Retrieve the content length
+            try
+            {
+                auto it = this->__req->header("Content-Length");
+
+                size_t content_length = std::stoul(it);
+
+                // If the range between body_ptr and buf + total_recv is less
+                // than the content length, then there are still data to read
+                // from the client socket.
+
+                size_t read_body = buf.data() + total_recv - body_ptr;
+                std::string final_body(body_ptr, read_body);
+
+                if (read_body < content_length)
+                {
+                    // Decide how many more data to read
+
+                    size_t body_recv;
+                    size_t remaining = content_length - read_body;
+
+                    // Allocate memory for the body
+
+                    char *body_buf = new char[remaining + 1];
+
+                    for (body_recv = 0; body_recv < remaining;)
+                    {
+                        brecv = recv(
+                            client_socket, body_buf + body_recv, remaining, 0
+                        );
+
+                        if (brecv == -1)
+                        {
+                            std::cerr << "recv: " << std::strerror(errno)
+                                      << std::endl;
+                            break;
+                        }
+
+                        if (brecv == 0)
+                        {
+                            break;
+                        }
+
+                        body_recv += brecv;
+                        body_buf[body_recv] = '\0';
+                    }
+
+                    final_body.append(body_buf, body_recv);
+                    this->__req->set_data(this->__req->data() + body_buf);
+                    delete[] body_buf;
+                }
+
+                this->__req->set_body(final_body);
+            }
+            catch (const std::out_of_range &e)
+            {
+                std::cerr << "http_request::header(Content-Length): "
+                          << e.what() << std::endl;
+                close(client_socket);
+                continue;
+            }
         }
 
         this->__res =
