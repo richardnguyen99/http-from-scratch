@@ -27,7 +27,19 @@ public:
     ) override;
 
     void
-    register_static(const std::string &path) override;
+    register_static_handler(const std::string &path) override;
+
+    void
+    register_error_handler(
+        hfs::http_status_code_t status_code, const std::string &path,
+        http_router::route_handler_t handler
+    ) override;
+
+    void
+    handle_error(
+        int client_socket, hfs::http_status_code_t status_code,
+        const std::string &reason
+    );
 
 private:
     std::unique_ptr<hfs::http_request> __req;

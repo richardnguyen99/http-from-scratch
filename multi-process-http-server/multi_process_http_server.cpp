@@ -43,9 +43,20 @@ multi_process_http_server::register_handler(
 }
 
 void
-multi_process_http_server::register_static(const std::string &path)
+multi_process_http_server::register_static_handler(const std::string &path)
 {
     std::cout << "multi_process_http_server::register_static(" << path << ")"
               << std::endl;
+}
+
+void
+multi_process_http_server::register_error_handler(
+    hfs::http_status_code_t status_code, const std::string &path,
+    hfs::http_router::route_handler_t handler
+)
+{
+    (void)status_code;
+    (void)path;
+    (void)handler;
 }
 } // namespace hfs

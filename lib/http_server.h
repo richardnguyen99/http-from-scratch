@@ -27,7 +27,13 @@ public:
     ) = 0;
 
     virtual void
-    register_static(const std::string &path) = 0;
+    register_static_handler(const std::string &path) = 0;
+
+    virtual void
+    register_error_handler(
+        hfs::http_status_code_t status_code, const std::string &path,
+        hfs::http_router::route_handler_t handler
+    ) = 0;
 
 protected:
     struct addrinfo __hints;

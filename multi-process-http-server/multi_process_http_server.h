@@ -25,7 +25,13 @@ public:
     ) override;
 
     void
-    register_static(const std::string &path) override;
+    register_static_handler(const std::string &path) override;
+
+    void
+    register_error_handler(
+        hfs::http_status_code_t status_code, const std::string &path,
+        hfs::http_router::route_handler_t handler
+    ) override;
 };
 } // namespace hfs
 

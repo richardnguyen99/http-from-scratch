@@ -75,6 +75,20 @@ static constexpr const char *HTTP_SERVER_VERSION       = "HTTP/1.1";
 static constexpr std::size_t HTTP_SERVER__DEFAULT_PORT = 7000;
 static constexpr std::size_t HTTP_BUFSZ                = 8192; // 8KB
 
+static constexpr const char template_error[] = R"(
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <title>{{ status_code }} {{ status_text }}</title>
+</head>
+<body>
+    <h1>{{ status_code }} {{ status_text }}</h1>
+    <p>{{ message }}</p>
+</body>
+</html>
+)";
+
 typedef enum http_status_code
 {
     /* Request fulfilled */
@@ -221,6 +235,16 @@ inline static std::string
 current_date()
 {
     return format_date(time(0));
+}
+
+inline static void
+handle_syscall_error(int status, const std::string &prefix)
+{
+    if (status == -1)
+    {
+        std::cerr << prefix << ": " << strerror(errno) << std::endl;
+        exit(EXIT_FAILURE);
+    }
 }
 
 } // namespace hfs
