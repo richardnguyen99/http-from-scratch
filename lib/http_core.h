@@ -43,6 +43,7 @@
 // Third-party headers
 #include <nlohmann/json.hpp> // For working with JSON structure
 #include <pantor/inja.hpp>   // For working with Jinja2-like templates
+#include <uriparser/Uri.h>   // For parsing URIs
 
 // UUID headers
 #ifdef HAVE_UUID_UUID_H

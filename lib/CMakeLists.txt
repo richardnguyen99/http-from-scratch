@@ -6,6 +6,7 @@ set(LIBHTTP_SOURCES
     http_response.cpp
     http_router.cpp
     http_uuid.cpp
+    http_uri.cpp
 )   
 
 add_library(http-lib SHARED ${LIBHTTP_SOURCES})
@@ -14,9 +15,9 @@ target_compile_features(http-lib PUBLIC cxx_std_20)
 
 if (HAVE_UUID_UUID_H)
     message(STATUS "Add linkage libuuid (-luuid)")
-    target_link_libraries(http-lib uuid ${HFS_SELECTED_JSON_LIBRARY} ${HFS_SELECTED_INJA_LIBRARY})
+    target_link_libraries(http-lib uuid uriparser ${HFS_SELECTED_JSON_LIBRARY} ${HFS_SELECTED_INJA_LIBRARY})
 else()
     message(STATUS "Excluding libuuid")
-    target_link_libraries(http-lib ${HFS_SELECTED_JSON_LIBRARY} ${HFS_SELECTED_INJA_LIBRARY})
+    target_link_libraries(http-lib uriparser ${HFS_SELECTED_JSON_LIBRARY} ${HFS_SELECTED_INJA_LIBRARY})
 endif()
 

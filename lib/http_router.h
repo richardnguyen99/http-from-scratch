@@ -4,6 +4,7 @@
 #include <http_core.h>
 #include <http_request.h>
 #include <http_response.h>
+#include <http_uri.h>
 
 namespace hfs
 {

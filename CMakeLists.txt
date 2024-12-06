@@ -301,6 +301,13 @@ else()
     set(HAVE_UUID_UUID_H OFF)
 endif()
 
+CHECK_INCLUDE_FILE_CXX(uriparser/Uri.h HAVE_URIPARSER_URI)
+if (HAVE_URIPARSER_URI)
+    message(STATUS "Using system uriparser library")
+    set(HAVE_URIPARSER_URI_H ON)
+else()
+    message(FATAL_ERROR "Using embedded uriparser library")
+endif()
 
 
 # Add these definitions to the header config file

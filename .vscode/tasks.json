@@ -16,7 +16,9 @@
         "${fileDirname}/../lib/*.cpp",
         "-o",
         "${fileDirname}/${relativeFileDirname}.out",
-        "-luuid"
+        "-luuid",
+        "-luriparser",
+        "-lpthread"
       ],
       "options": {
         "cwd": "${fileDirname}"

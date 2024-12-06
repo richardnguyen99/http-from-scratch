@@ -3,6 +3,7 @@
 
 #include "http_core.h"
 #include "http_router.h"
+#include "http_uri.h"
 
 #define HTTP_SERVER_USER_AGENT "http-from-scratch server"
 namespace hfs

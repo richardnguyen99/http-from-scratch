@@ -522,50 +522,41 @@ blocking_http_server::register_handler(
         );
     }
 
-    if (this->__router.handlers.find(method) == this->__router.handlers.end())
-    {
-        throw std::runtime_error("Invalid HTTP method");
-    }
-
     if (path == "/")
     {
-        // Register the handler with the router
         this->__router.handlers[method] = handler;
-
-        // Register the path with the router
-        this->__router.routes[path] = hfs::http_router();
+        return;
     }
-    else
+
+    UriUriA *uri = hfs::http_uri::parse(path);
+
+    if (uri == nullptr)
     {
-        // Split the path by "/"
-        std::vector<std::string> path_parts;
-        std::istringstream path_stream;
-
-        path_stream.str(path);
-
-        for (std::string part; std::getline(path_stream, part, '/');)
-        {
-            if (!part.empty())
-            {
-                path_parts.push_back(part);
-            }
-        }
-
-        // Register the handler with the router
-        hfs::http_router *router = &this->__router;
-
-        for (const auto &part : path_parts)
-        {
-            if (router->routes.find(part) == router->routes.end())
-            {
-                router->routes[part] = hfs::http_router();
-            }
-
-            router = &router->routes[part];
-        }
-
-        router->handlers[method] = handler;
+        throw std::runtime_error("Invalid URI");
     }
+
+    // List all the segments in the URI
+    UriPathSegmentA *segment;
+    std::string uri_path;
+    hfs::http_router *router = &this->__router;
+
+    for (segment = uri->pathHead; segment != nullptr; segment = segment->next)
+    {
+        uri_path = std::string(segment->text.first, segment->text.afterLast);
+        std::cout << "URI Path: " << uri_path << std::endl;
+
+        if (this->__router.routes.find(uri_path) == this->__router.routes.end())
+        {
+            router->routes[uri_path] = hfs::http_router();
+        }
+
+        router = &router->routes[uri_path];
+    }
+
+    router->handlers[method] = handler;
+
+    uriFreeUriMembersA(uri);
+    delete uri;
 }
 
 void

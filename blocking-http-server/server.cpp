@@ -41,6 +41,29 @@ main()
     );
 
     server->register_handler(
+        "/register", "GET",
+        [](const hfs::http_request &req, hfs::http_response &res)
+        {
+            (void)req;
+            res.render("register");
+        }
+    );
+
+    server->register_handler(
+        "/register", "POST",
+        [](const hfs::http_request &req, hfs::http_response &res)
+        {
+            (void)req;
+
+            inja::json data;
+            data["title"]   = "Register";
+            data["message"] = "Registration successful!";
+
+            res.render("register", data);
+        }
+    );
+
+    server->register_handler(
         "/about", "GET",
         [](const hfs::http_request &req, hfs::http_response &res)
         {
@@ -50,6 +73,19 @@ main()
             data["title"] = "About";
 
             res.render("about", data);
+        }
+    );
+
+    server->register_handler(
+        "/blog/:slug", "GET",
+        [](const hfs::http_request &req, hfs::http_response &res)
+        {
+            (void)req;
+
+            inja::json data;
+            data["title"] = "Blog";
+
+            res.body("Blog");
         }
     );
 
