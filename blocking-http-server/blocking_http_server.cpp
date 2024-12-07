@@ -9,10 +9,10 @@ blocking_http_server::blocking_http_server() : __req(nullptr), __res(nullptr)
     std::cout << "blocking_http_server::blocking_http_server()" << std::endl;
 #endif
 
-    this->__router           = hfs::http_router();
-    this->__router.base_name = "/";
-    this->__static_path      = "../public";
-    this->__static_dir       = std::filesystem::directory_entry(
+    this->__router            = std::make_unique<hfs::http_router>();
+    this->__router->base_name = "/";
+    this->__static_path       = "../public";
+    this->__static_dir        = std::filesystem::directory_entry(
         std::filesystem::path(this->__static_path)
     );
 }
@@ -245,18 +245,27 @@ blocking_http_server::start()
         bool is_static                            = false;
         hfs::http_router *router                  = nullptr;
         hfs::http_router::route_handler_t handler = nullptr;
+        std::vector<std::pair<std::string, std::string>> params;
 
         for (const auto &part : path_parts)
         {
             if (router == nullptr || part == "/")
             {
-                router = &this->__router;
+                router = this->__router.get();
             }
             else if (router->routes.find(part) != router->routes.end())
             {
-                router = &router->routes[part];
-                // Find in the static files
+                router = router->routes[part].get();
             }
+            // Check if the router has a parameter router
+            else if (router->routes.find("*") != router->routes.end())
+            {
+                router = router->routes["*"].get();
+                params.push_back(std::make_pair(
+                    ((http_param_router *)router)->param_name, part
+                ));
+            }
+            // Find in the static files
             else
             {
                 is_static = true;
@@ -271,6 +280,15 @@ blocking_http_server::start()
         }
         else
         {
+
+            if (router->is_param_router)
+            {
+                std::cout << this->__req->path() << " is a param router"
+                          << std::endl;
+                for (const auto &[key, value] : params)
+                    this->__req->add_param(key, value);
+            }
+
             handler = router->handlers[this->__req->method()];
             if (handler == nullptr)
             {
@@ -524,7 +542,7 @@ blocking_http_server::register_handler(
 
     if (path == "/")
     {
-        this->__router.handlers[method] = handler;
+        this->__router->handlers[method] = handler;
         return;
     }
 
@@ -538,20 +556,40 @@ blocking_http_server::register_handler(
     // List all the segments in the URI
     UriPathSegmentA *segment;
     std::string uri_path;
-    hfs::http_router *router = &this->__router;
+    hfs::http_router *router = this->__router.get();
 
     for (segment = uri->pathHead; segment != nullptr; segment = segment->next)
     {
         uri_path = std::string(segment->text.first, segment->text.afterLast);
-        std::cout << "URI Path: " << uri_path << std::endl;
 
-        if (this->__router.routes.find(uri_path) == this->__router.routes.end())
+        // Check if the path is a route parameter
+        if (uri_path[0] == ':')
         {
-            router->routes[uri_path] = hfs::http_router();
+            auto it = router->routes.find("*");
+            if (it == router->routes.end())
+            {
+                router->routes["*"] =
+                    std::make_unique<hfs::http_param_router>();
+            }
+            else
+            {
+                router = it->second.get();
+            }
+
+            router = router->routes["*"].get();
+            continue;
         }
 
-        router = &router->routes[uri_path];
+        if (router->routes.find(uri_path) == router->routes.end())
+        {
+            router->routes[uri_path] = std::make_unique<hfs::http_router>();
+        }
+
+        router = router->routes[uri_path].get();
     }
+
+    if (router->is_param_router)
+        ((hfs::http_param_router *)router)->param_name = uri_path.substr(1);
 
     router->handlers[method] = handler;
 
@@ -625,9 +663,9 @@ blocking_http_server::handle_error(
 
     for (const auto &part : path_parts)
     {
-        if (this->__router.routes.find(part) != this->__router.routes.end())
+        if (this->__router->routes.find(part) != this->__router->routes.end())
         {
-            handler = this->__router.routes[part].error_handlers[status_code];
+            handler = this->__router->routes[part]->error_handlers[status_code];
         }
     }
 

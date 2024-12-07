@@ -64,7 +64,8 @@ public:
     ~http_router();
 
     std::string base_name;
-    std::unordered_map<std::string, hfs::http_router> routes;
+    bool is_param_router;
+    std::unordered_map<std::string, std::unique_ptr<hfs::http_router>> routes;
     std::unordered_map<hfs::http_status_code_t, error_handler_t> error_handlers;
     std::unordered_map<std::string, route_handler_t> handlers = {
         {"GET",     not_implemented},
@@ -77,6 +78,19 @@ public:
         {"TRACE",   not_implemented},
         {"CONNECT", not_implemented},
     };
+
+protected:
+    http_router(bool is_param_router);
 };
+
+class http_param_router : public http_router
+{
+public:
+    http_param_router();
+    ~http_param_router();
+
+    std::string param_name;
+};
+
 } // namespace hfs
 #endif // __HTTP_ROUTE_H__

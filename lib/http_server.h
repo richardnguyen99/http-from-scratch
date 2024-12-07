@@ -44,7 +44,7 @@ protected:
     int __backlog;
     std::string __static_path;
     std::filesystem::directory_entry __static_dir;
-    hfs::http_router __router;
+    std::unique_ptr<hfs::http_router> __router;
 };
 } // namespace hfs
 

@@ -77,15 +77,16 @@ main()
     );
 
     server->register_handler(
-        "/blog/:slug", "GET",
+        "/blogs/:slug", "GET",
         [](const hfs::http_request &req, hfs::http_response &res)
         {
-            (void)req;
+            std::string slug = req.param("slug");
 
             inja::json data;
-            data["title"] = "Blog";
+            data["heading"] = slug;
+            data["title"]   = slug + " | Blog";
 
-            res.body("Blog");
+            res.render("blog", data);
         }
     );
 

@@ -159,6 +159,25 @@ public:
     header(const std::string &key) const;
 
     /**
+     * @brief Retrieve a paramter value of the request that matches with the
+     * corresponding key of a parameter router
+     *
+     * @param key - The key of the parameter.
+     * @return const std::string&
+     *
+     * For example:
+     *
+     * ```cpp
+     * server->register_handler("/blog/:slug", "GET", blog_handler);
+     *
+     * // GET /blog/hello-world
+     * req.param("slug") // hello-world
+     * ```
+     */
+    const std::string &
+    param(const std::string &key) const;
+
+    /**
      * @brief Retrieve the UUID of the request.
      *
      * @return `const std::string&`
@@ -200,6 +219,15 @@ public:
     set_body(const char *body, size_t len) noexcept;
 
     /**
+     * @brief Add a parameter from a parameter router to the request
+     *
+     * @param key - The key of the parameter defined in the router
+     * @param value - The value of the parameter defined in the request
+     */
+    void
+    add_param(const std::string &key, const std::string &value) noexcept;
+
+    /**
      * @brief Set the raw buffer of the request.
      *
      * @param data - A string representing the raw buffer of the request.
@@ -225,6 +253,7 @@ private:
     std::string __version;
     std::string __body;
     std::unordered_map<std::string, std::string> __headers;
+    std::unordered_map<std::string, std::string> __params;
 
     std::string __buf;
 

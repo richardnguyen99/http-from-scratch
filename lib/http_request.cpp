@@ -4,14 +4,14 @@ namespace hfs
 {
 http_request::http_request()
     : __status(HTTP_STATUS_OK), __method(""), __path(""), __version(""),
-      __body(""), __headers(), __buf("")
+      __body(""), __headers(), __params(), __buf("")
 {
     this->__uuid = http_uuid::generate(this);
 }
 
 http_request::http_request(const std::string &buf)
     : __status(HTTP_STATUS_OK), __method(""), __path(""), __version(""),
-      __body(""), __headers(), __buf(buf)
+      __body(""), __headers(), __params(), __buf(buf)
 {
     this->__uuid = http_uuid::generate(this);
     this->__parse();
@@ -19,7 +19,7 @@ http_request::http_request(const std::string &buf)
 
 http_request::http_request(const char *buf, size_t len)
     : __status(HTTP_STATUS_OK), __method(""), __path(""), __version(""),
-      __body(""), __headers(), __buf(buf, len)
+      __body(""), __headers(), __params(), __buf(buf, len)
 {
     this->__uuid = http_uuid::generate(this);
     this->__parse();
@@ -31,7 +31,7 @@ http_request::http_request(
     const std::unordered_map<std::string, std::string> &headers
 )
     : __status(HTTP_STATUS_OK), __method(method), __path(path),
-      __version(version), __body(body), __headers(headers)
+      __version(version), __body(body), __headers(headers), __params()
 {
     this->__uuid = http_uuid::generate(this);
 }
@@ -98,6 +98,26 @@ http_request::header(const std::string &key) const
     }
 
     return it->second;
+}
+
+const std::string &
+http_request::param(const std::string &key) const
+{
+    auto it = this->__params.find(key);
+    if (it == this->__params.end())
+    {
+        throw std::out_of_range("http_request::param: Invalid parameter");
+    }
+
+    return it->second;
+}
+
+void
+http_request::add_param(
+    const std::string &key, const std::string &value
+) noexcept
+{
+    this->__params[key] = value;
 }
 
 const std::string &
