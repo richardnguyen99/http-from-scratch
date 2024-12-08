@@ -2,6 +2,7 @@
 #define __HTTP_REQUEST_H__ 1
 
 #include <http_core.h>
+#include <http_uri.h>
 #include <http_uuid.h>
 
 namespace hfs
@@ -86,9 +87,9 @@ public:
      * ```
      * @endcode
      *
-     * @return `const std::string&`
+     * @return `std::string_view`
      */
-    const std::string &
+    std::string_view
     path() const noexcept;
 
     /**
@@ -249,7 +250,7 @@ private:
     http_status_code_t __status;
     std::string __uuid;
     std::string __method;
-    std::string __path;
+    hfs::http_uri __path;
     std::string __version;
     std::string __body;
     std::unordered_map<std::string, std::string> __headers;

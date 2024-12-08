@@ -224,7 +224,7 @@ blocking_http_server::start()
 
         // Split the path by "/"
         std::vector<std::string> path_parts;
-        std::string path = this->__req->path();
+        std::string path = std::string(this->__req->path());
         std::istringstream path_stream;
 
         path_stream.str(path);
@@ -299,7 +299,16 @@ blocking_http_server::start()
             }
 
             // Call the handler
-            handler(*this->__req, *this->__res);
+            try
+            {
+                handler(*this->__req, *this->__res);
+            }
+            catch (const std::exception &e)
+            {
+                handle_error(
+                    client_socket, hfs::HTTP_STATUS_NOT_IMPLEMENTED, e.what()
+                );
+            }
 
             this->__res->header(
                 "Cache-Control", "private, must-revalidate, max-age=0"
@@ -638,7 +647,7 @@ blocking_http_server::handle_error(
         this->__res = std::make_unique<http_response>(this->__static_path);
     }
 
-    std::string path = this->__req->path();
+    std::string path = std::string(this->__req->path());
 
     // Split the path by "/"
     std::vector<std::string> path_parts;
@@ -682,8 +691,9 @@ blocking_http_server::__server_static(int client_socket)
 {
     int fd;
     struct stat file_stat;
-    char *body            = nullptr;
-    std::string file_path = this->__static_path + this->__req->path();
+    char *body = nullptr;
+    std::string file_path =
+        this->__static_path + std::string(this->__req->path());
 
     if ((fd = open(file_path.c_str(), O_RDONLY)) == -1)
     {
@@ -691,7 +701,7 @@ blocking_http_server::__server_static(int client_socket)
         {
             this->handle_error(
                 client_socket, HTTP_STATUS_NOT_FOUND,
-                "Path not found: " + this->__req->path()
+                "Path not found: " + std::string(this->__req->path())
             );
 
             return 0;

@@ -173,6 +173,10 @@ CHECK_INCLUDE_FILE_CXX(utility HAVE_UTILITY_H)
 if (NOT HAVE_UTILITY_H)
     message(FATAL_ERROR "The compiler ${CMAKE_CXX_COMPILER} has no utility support. Please use a different C++ compiler.")
 endif()
+CHECK_INCLUDE_FILE_CXX(string_view HAVE_STRING_VIEW_H)
+if (NOT HAVE_STRING_VIEW_H)
+    message(FATAL_ERROR "The compiler ${CMAKE_CXX_COMPILER} has no string_view support. Please use a different C++ compiler.")
+endif()
 
 # Check some posix headers, if not throw an error
 include(CheckIncludeFile)

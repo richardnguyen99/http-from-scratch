@@ -3,23 +3,23 @@
 namespace hfs
 {
 http_request::http_request()
-    : __status(HTTP_STATUS_OK), __method(""), __path(""), __version(""),
-      __body(""), __headers(), __params(), __buf("")
+    : __status(HTTP_STATUS_OK), __method(""), __version(""), __body(""),
+      __headers(), __params(), __buf("")
 {
     this->__uuid = http_uuid::generate(this);
 }
 
 http_request::http_request(const std::string &buf)
-    : __status(HTTP_STATUS_OK), __method(""), __path(""), __version(""),
-      __body(""), __headers(), __params(), __buf(buf)
+    : __status(HTTP_STATUS_OK), __method(""), __version(""), __body(""),
+      __headers(), __params(), __buf(buf)
 {
     this->__uuid = http_uuid::generate(this);
     this->__parse();
 }
 
 http_request::http_request(const char *buf, size_t len)
-    : __status(HTTP_STATUS_OK), __method(""), __path(""), __version(""),
-      __body(""), __headers(), __params(), __buf(buf, len)
+    : __status(HTTP_STATUS_OK), __method(""), __version(""), __body(""),
+      __headers(), __params(), __buf(buf, len)
 {
     this->__uuid = http_uuid::generate(this);
     this->__parse();
@@ -58,10 +58,10 @@ http_request::method() const noexcept
     return this->__method;
 }
 
-const std::string &
+std::string_view
 http_request::path() const noexcept
 {
-    return this->__path;
+    return this->__path.uri();
 }
 
 const std::string &
@@ -166,12 +166,13 @@ http_request::__parse_request_line(const std::string &line)
         throw std::runtime_error("Invalid request line: " + line);
     }
 
+    std::string uri;
+
     request_line >> this->__method;
-    request_line >> this->__path;
+    request_line >> uri;
     request_line >> this->__version;
 
-    if (this->__method.empty() || this->__path.empty() ||
-        this->__version.empty())
+    if (this->__method.empty() || uri.empty() || this->__version.empty())
     {
         throw std::runtime_error("Invalid request line: " + this->__method);
     }
@@ -191,11 +192,14 @@ http_request::__parse_request_line(const std::string &line)
             "Unsupported HTTP this->__version: " + this->__version
         );
     }
+
+    this->__path = hfs::http_uri(uri);
 }
 
 /**
  * @brief HTTP RFC 2616 Section 5.3 - Request Header Fields
- *
+
+        uri_a->scheme.first*
  */
 void
 http_request::__parse_headers(const std::string &line)
