@@ -125,8 +125,20 @@ http_response::render(const std::string &endpoint, inja::json data, int flags)
         return *this;
     }
 
-    std::string temp(buffer, st.st_size);
-    std::string body = hfs::http_response::env.render(temp, data);
+    if (flags & GET_REQUEST)
+    {
+        std::string temp(buffer, st.st_size);
+        std::string body = hfs::http_response::env.render(temp, data);
+        this->body(body).header("Content-Type", "text/html; charset=utf-8");
+    }
+
+    if (flags & ETAG)
+        this->header("ETag", "W/" + hfs::etag(st.st_mtime, st.st_size));
+
+    if (flags & LAST_MODIFIED)
+        this->header("Last-Modified", hfs::format_date(st.st_mtime));
+
+    this->header("Cache-Control", "public, max-age=0, must-revalidate");
 
     if (munmap(buffer, st.st_size) == -1)
     {
@@ -134,14 +146,6 @@ http_response::render(const std::string &endpoint, inja::json data, int flags)
         this->body("500 Internal Server Error");
         return *this;
     }
-
-    this->body(body).header("Content-Type", "text/html; charset=utf-8");
-
-    if (flags & ETAG)
-        this->header("ETag", "W/" + hfs::etag(st.st_mtime, st.st_size));
-
-    if (flags & LAST_MODIFIED)
-        this->header("Last-Modified", hfs::format_date(st.st_mtime));
 
     return *this;
 }

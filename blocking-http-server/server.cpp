@@ -18,6 +18,15 @@ main()
     );
 
     server->register_handler(
+        "/", "HEAD",
+        [](const hfs::http_request &req, hfs::http_response &res)
+        {
+            (void)req;
+            res.render("index", {}, hfs::http_response::HEAD_REQUEST);
+        }
+    );
+
+    server->register_handler(
         "/login", "GET",
         [](const hfs::http_request &req, hfs::http_response &res)
         {

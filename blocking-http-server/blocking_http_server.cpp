@@ -243,10 +243,6 @@ blocking_http_server::start()
                     client_socket, hfs::HTTP_STATUS_NOT_IMPLEMENTED, e.what()
                 );
             }
-
-            this->__res->header(
-                "Cache-Control", "private, must-revalidate, max-age=0"
-            );
         }
 
         // Prepare response header for server
