@@ -20,44 +20,16 @@ public:
     )>;
 
     static void
-    not_implemented(const hfs::http_request &req, hfs::http_response &res)
-    {
-        (void)req;
-        (void)res;
-        throw std::runtime_error("Not implemented");
-    };
+    not_implemented(const hfs::http_request &req, hfs::http_response &res);
 
     static void
     default_error_handler(
         hfs::http_status_code_t status, const std::string &reason,
         const hfs::http_request &req, hfs::http_response &res
-    )
-    {
-        (void)req;
+    );
 
-        std::string body = hfs::http_response::env.render(
-            hfs::template_error,
-            {
-                {"status_code", std::to_string(status)      },
-                {"status_text", hfs::http_status_str(status)},
-                {"message",     reason                      },
-        }
-        );
-
-        res.status(status)
-            .header("Content-Type", "text/html; charset=utf-8")
-            .header("Connection", "close")
-            .header("Date", hfs::current_date())
-            .header("Cache-Control", "no-cache, no-store, must-revalidate")
-            .header("Pragma", "no-cache")
-            .header("Expires", "-1")
-            .header(
-                "Server", std::string(hfs::HTTP_SERVER_NAME) + "/" +
-                              std::string(hfs::HTTP_SERVER_VERSION)
-            )
-            .header("ETag", "W/" + hfs::etag(time(0), body.size()))
-            .body(body);
-    }
+    static std::pair<hfs::http_router *, hfs::http_router::route_handler_t>
+    get_route_handler(hfs::http_router *router, hfs::http_request *req);
 
 public:
     http_router();

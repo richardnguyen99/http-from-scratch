@@ -237,6 +237,15 @@ public:
     set_data(const std::string &data) noexcept;
 
     /**
+     * @brief Parse the request buffer to an existing HTTP request object and
+     * replace the existing values.
+     *
+     * @param buf - A string representing the raw buffer of the request.
+     */
+    void
+    parse(std::string_view buf);
+
+    /**
      * @brief Print the request to the output stream.
      *
      * @param os Standard output stream.

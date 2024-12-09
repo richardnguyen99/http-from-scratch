@@ -138,6 +138,13 @@ http_request::set_data(const std::string &data) noexcept
     this->__buf = data;
 }
 
+void
+http_request::parse(std::string_view buf)
+{
+    this->__buf = buf;
+    this->__parse();
+}
+
 static bool
 __check_method(const std::string &method)
 {

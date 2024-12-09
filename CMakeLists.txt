@@ -235,7 +235,6 @@ endif()
 CHECK_INCLUDE_FILE_CXX(sys/uio.h HAVE_SYS_UIO)
 
 if (HAVE_SYS_UIO)
-    message(STATUS "Using system sys/uio.h library")
     set(HAVE_SYS_UIO_H ON)
 else()
     set(HAVE_SYS_UIO_H OFF)
@@ -323,8 +322,7 @@ set(CMAKE_CXX_STANDARD_REQUIRED ON)
 set(CMAKE_CXX_EXTENSIONS ON)
 
 
-set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -O2 -Wall -Wextra -Werror -pedantic")
-
+set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -fPIC -fsanitize=address -fno-omit-frame-pointer -O2 -Wall -Wextra -Werror -pedantic")
 
 # If buildd type is debug, set the flags to debug
 if(CMAKE_BUILD_TYPE STREQUAL "Debug")

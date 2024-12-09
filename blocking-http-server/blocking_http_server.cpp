@@ -66,6 +66,18 @@ blocking_http_server::start()
                   << std::endl;
 #endif
 
+        this->__req = std::make_unique<http_request>();
+        this->__res =
+            std::make_unique<http_response>(this->__static_path + "/pages");
+
+        if (this->__req == nullptr || this->__res == nullptr)
+        {
+            std::cerr << "Failed to create a request or response object"
+                      << std::endl;
+            handle_syscall_error(close(client_socket), "close");
+            continue;
+        }
+
         // Start reading the incoming request
         char buf[HTTP_BUFSZ + 1];
         ssize_t brecv, bsent;
@@ -119,20 +131,11 @@ blocking_http_server::start()
 
         try
         {
-            this->__req = std::make_unique<http_request>(buf, total_recv);
+            this->__req->parse(buf);
         }
         catch (const std::runtime_error &e)
         {
             std::cerr << "http_request::constructor(buf, len): " << e.what()
-                      << std::endl;
-
-            handle_syscall_error(close(client_socket), "close");
-            continue;
-        }
-
-        if (this->__req == nullptr)
-        {
-            std::cerr << "http_request: Failed to parse the request"
                       << std::endl;
 
             handle_syscall_error(close(client_socket), "close");
@@ -210,86 +213,17 @@ blocking_http_server::start()
             }
         }
 
-        this->__res =
-            std::make_unique<http_response>(this->__static_path + "/pages");
+        auto [router, handler] = hfs::http_router::get_route_handler(
+            this->__router.get(), this->__req.get()
+        );
 
-        if (this->__res == nullptr)
-        {
-            std::cerr << "http_response: Failed to create a response"
-                      << std::endl;
-
-            handle_syscall_error(close(client_socket), "close");
-            continue;
-        }
-
-        // Split the path by "/"
-        std::vector<std::string> path_parts;
-        std::string path = std::string(this->__req->path());
-        std::istringstream path_stream;
-
-        path_stream.str(path);
-
-        for (std::string part; std::getline(path_stream, part, '/');)
-        {
-            if (!part.empty())
-            {
-                path_parts.push_back(part);
-            }
-            else
-            {
-                path_parts.push_back("/");
-            }
-        }
-
-        // Find the handler for the path
-        bool is_static                            = false;
-        hfs::http_router *router                  = nullptr;
-        hfs::http_router::route_handler_t handler = nullptr;
-        std::vector<std::pair<std::string, std::string>> params;
-
-        for (const auto &part : path_parts)
-        {
-            if (router == nullptr || part == "/")
-            {
-                router = this->__router.get();
-            }
-            else if (router->routes.find(part) != router->routes.end())
-            {
-                router = router->routes[part].get();
-            }
-            // Check if the router has a parameter router
-            else if (router->routes.find("*") != router->routes.end())
-            {
-                router = router->routes["*"].get();
-                params.push_back(std::make_pair(
-                    ((http_param_router *)router)->param_name, part
-                ));
-            }
-            // Find in the static files
-            else
-            {
-                is_static = true;
-            }
-        }
-
-        // Retrieve the handler for the method
-        if (is_static)
+        if (router == nullptr || handler == nullptr)
         {
             if (this->__server_static(client_socket) == -1)
                 continue;
         }
-        else
+        else if (router)
         {
-
-            if (router->is_param_router)
-            {
-                std::cout << this->__req->path() << " is a param router"
-                          << std::endl;
-                for (const auto &[key, value] : params)
-                    this->__req->add_param(key, value);
-            }
-
-            handler = router->handlers[this->__req->method()];
             if (handler == nullptr)
             {
                 std::cerr << "No handler found for " << this->__req->method()

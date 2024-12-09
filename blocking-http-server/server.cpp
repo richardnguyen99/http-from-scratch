@@ -90,6 +90,20 @@ main()
         }
     );
 
+    server->register_handler(
+        "/series/:series_id/posts/:post_id", "GET",
+        [](const hfs::http_request &req, hfs::http_response &res)
+        {
+            std::string series_id = req.param("series_id");
+            std::string post_id   = req.param("post_id");
+
+            inja::json data;
+            data["title"] = "Post " + post_id + " | Series " + series_id;
+
+            res.render("post", data);
+        }
+    );
+
     server->listen(7000);
     server->start();
 
