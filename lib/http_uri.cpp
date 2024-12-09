@@ -9,6 +9,7 @@ http_uri::http_uri()
 http_uri::http_uri(std::string_view uri) : __uri(uri)
 {
     UriUriA *uri_a = this->parse(uri);
+
     if (uri_a == nullptr)
     {
         throw std::runtime_error("Invalid URI: " + std::string(uri));
@@ -138,7 +139,12 @@ http_uri::parse(std::string_view uri)
     {
         uriFreeUriMembersA(uri_a);
         delete uri_a;
-        return nullptr;
+
+        throw std::runtime_error(
+            "Invalid URI (liburiparser): syntax @ '" +
+            std::string(error_pos, 18) + "' (#" +
+            std::to_string(error_pos - uri.data()) + ")"
+        );
     }
 
     return uri_a;

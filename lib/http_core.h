@@ -76,6 +76,7 @@ static constexpr const char *HTTP_SERVER_NAME          = "hfs";
 static constexpr const char *HTTP_SERVER_VERSION       = "HTTP/1.1";
 static constexpr std::size_t HTTP_SERVER__DEFAULT_PORT = 7000;
 static constexpr std::size_t HTTP_BUFSZ                = 8192; // 8KB
+static constexpr std::size_t HTTP_HDRSZ                = 2048; // 2KB
 
 static constexpr const char template_error[] = R"(
 <!DOCTYPE html>
@@ -104,12 +105,16 @@ typedef enum http_status_code
     HTTP_STATUS_FOUND             = 302,
 
     /* Client errors */
-    HTTP_STATUS_BAD_REQUEST        = 400,
-    HTTP_STATUS_UNAUTHORIZED       = 401,
-    HTTP_STATUS_FORBIDDEN          = 403,
-    HTTP_STATUS_NOT_FOUND          = 404,
-    HTTP_STATUS_METHOD_NOT_ALLOWED = 405,
-    HTTP_STATUS_REQUEST_TIMEOUT    = 408,
+    HTTP_STATUS_BAD_REQUEST                     = 400,
+    HTTP_STATUS_UNAUTHORIZED                    = 401,
+    HTTP_STATUS_FORBIDDEN                       = 403,
+    HTTP_STATUS_NOT_FOUND                       = 404,
+    HTTP_STATUS_METHOD_NOT_ALLOWED              = 405,
+    HTTP_STATUS_REQUEST_TIMEOUT                 = 408,
+    HTTP_STATUS_LENGTH_REQUIRED                 = 411,
+    HTTP_STATUS_REQUEST_TOO_LARGE               = 413,
+    HTTP_STATUS_URI_TOO_LONG                    = 414,
+    HTTP_STATUS_REQUEST_HEADER_FIELDS_TOO_LARGE = 431,
 
     /* Server errors */
     HTTP_STATUS_INTERNAL_SERVER_ERROR      = 500,
@@ -149,6 +154,10 @@ http_status_str(http_status_code_t status)
         return "Method Not Allowed";
     case HTTP_STATUS_REQUEST_TIMEOUT:
         return "Request Timeout";
+    case HTTP_STATUS_REQUEST_TOO_LARGE:
+        return "Request Entity Too Large";
+    case HTTP_STATUS_REQUEST_HEADER_FIELDS_TOO_LARGE:
+        return "Request Header Fields Too Large";
     case HTTP_STATUS_INTERNAL_SERVER_ERROR:
         return "Internal Server Error";
     case HTTP_STATUS_NOT_IMPLEMENTED:
@@ -227,8 +236,8 @@ format_date(time_t t)
 {
     struct tm tstruct;
     char buf[80];
-    tstruct = *gmtime(&t);
-    strftime(buf, sizeof(buf), "%a, %d %b %Y %H:%M:%S %Z", &tstruct);
+    tstruct = *std::gmtime(&t);
+    std::strftime(buf, sizeof(buf), "%a, %d %b %Y %H:%M:%S %Z", &tstruct);
 
     return buf;
 }
@@ -239,14 +248,30 @@ current_date()
     return format_date(time(0));
 }
 
+/**
+ * @brief Handle syscall-related errors if `status` is set to -1. Otherwise,
+ * it will ignore.
+ *
+ * @param status - A syscall-related status code.
+ * @param prefix - A prefix message to display, such as syscall names.
+ */
 inline static void
 handle_syscall_error(int status, const std::string &prefix)
 {
     if (status == -1)
     {
-        std::cerr << prefix << ": " << strerror(errno) << std::endl;
-        exit(EXIT_FAILURE);
+        std::cerr << prefix << ": " << std::strerror(errno) << std::endl;
+        std::exit(EXIT_FAILURE);
     }
+}
+
+inline static std::string
+format_function_error(const char *file, int line, const std::string &message)
+{
+    std::stringstream ss;
+    ss << file << "(at line " << line << "): " << message;
+
+    return ss.str();
 }
 
 } // namespace hfs

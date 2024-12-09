@@ -63,7 +63,7 @@ public:
      *
      * @return `const std::string&`
      */
-    const std::string &
+    std::string_view
     method() const noexcept;
 
     /**
@@ -208,7 +208,7 @@ public:
      * @param body  - A string containing the body content.
      */
     void
-    set_body(const std::string &body) noexcept;
+    set_body(std::string_view body) noexcept;
 
     /**
      * @brief Set the body content of the request buffer.
@@ -234,7 +234,7 @@ public:
      * @param data - A string representing the raw buffer of the request.
      */
     void
-    set_data(const std::string &data) noexcept;
+    set_data(std::string_view data) noexcept;
 
     /**
      * @brief Parse the request buffer to an existing HTTP request object and

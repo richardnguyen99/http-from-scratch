@@ -54,6 +54,12 @@ http_response::status(http_status_code_t status)
     return *this;
 }
 
+http_status_code_t
+http_response::status() const
+{
+    return this->__status;
+}
+
 http_response &
 http_response::header(const std::string &key, const std::string &value)
 {

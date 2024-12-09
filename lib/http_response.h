@@ -25,6 +25,9 @@ public:
     http_response &
     status(http_status_code_t status);
 
+    hfs::http_status_code_t
+    status() const;
+
     http_response &
     header(const std::string &key, const std::string &value);
 

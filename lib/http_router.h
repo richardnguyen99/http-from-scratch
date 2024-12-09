@@ -15,7 +15,7 @@ public:
         void(const hfs::http_request &req, hfs::http_response &res)>;
 
     using error_handler_t = std::function<void(
-        hfs::http_status_code_t status, const std::string &reason,
+        hfs::http_status_code_t status, std::string_view reason,
         const hfs::http_request &req, hfs::http_response &res
     )>;
 
@@ -24,7 +24,7 @@ public:
 
     static void
     default_error_handler(
-        hfs::http_status_code_t status, const std::string &reason,
+        hfs::http_status_code_t status, std::string_view reason,
         const hfs::http_request &req, hfs::http_response &res
     );
 

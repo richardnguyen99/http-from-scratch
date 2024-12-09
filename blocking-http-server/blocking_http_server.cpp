@@ -46,10 +46,10 @@ blocking_http_server::start()
         int client_socket = accept(
             this->__socket, (struct sockaddr *)&client_addr, &client_addr_size
         );
+
         if (client_socket == -1)
         {
-            std::cerr << "accept: " << std::strerror(errno) << std::endl;
-            continue;
+            handle_syscall_error(client_socket, "accept");
         }
 
         // Retrieve the client IP address and port number
@@ -74,17 +74,16 @@ blocking_http_server::start()
         {
             std::cerr << "Failed to create a request or response object"
                       << std::endl;
+
             handle_syscall_error(close(client_socket), "close");
             continue;
         }
 
         // Start reading the incoming request
-        char buf[HTTP_BUFSZ + 1];
+        char buf[HTTP_BUFSZ + 1] = {0};
         ssize_t brecv, bsent;
         std::size_t total_recv, total_sent;
         char *body_ptr = nullptr, *endhdr_ptr = nullptr;
-
-        std::memset(buf, 0, HTTP_BUFSZ);
 
         // Read everything from the client socket to the buffer.
         for (total_recv = 0; total_recv < HTTP_BUFSZ;)
@@ -104,7 +103,11 @@ blocking_http_server::start()
 
             if (total_recv >= HTTP_BUFSZ)
             {
-                break;
+                this->__res->status(hfs::HTTP_STATUS_BAD_REQUEST);
+                this->handle_error(
+                    "Request buffer exists the buffer size limit (" +
+                    std::to_string(HTTP_BUFSZ) + ")"
+                );
             }
 
             buf[total_recv] = '\0';
@@ -120,14 +123,10 @@ blocking_http_server::start()
 
         if (endhdr_ptr == nullptr && body_ptr == nullptr)
         {
-            std::cerr << "http_request: Invalid request" << std::endl;
-            handle_syscall_error(close(client_socket), "close");
+            this->__res->status(hfs::HTTP_STATUS_BAD_REQUEST);
+            this->handle_error("No end of header found");
             continue;
         }
-
-#ifdef DEBUG
-        std::cout << "Received " << total_recv << " bytes" << std::endl;
-#endif
 
         try
         {
@@ -135,82 +134,81 @@ blocking_http_server::start()
         }
         catch (const std::runtime_error &e)
         {
-            std::cerr << "http_request::constructor(buf, len): " << e.what()
-                      << std::endl;
-
-            handle_syscall_error(close(client_socket), "close");
-            continue;
-        }
-
-        // Perform check on the request
-        if (this->__req->status() != HTTP_STATUS_OK)
-        {
-            std::cerr << "http_request: " << this->__req->status() << std::endl;
-
-            handle_syscall_error(close(client_socket), "close");
-            continue;
+            this->handle_error(e.what());
         }
 
         // If the request is a POST or PUT, parse the body
         if (this->__req->method() == "POST" || this->__req->method() == "PUT")
         {
             // Retrieve the content length
+            std::string cl_str;
+            std::size_t content_length = 0;
+
+            // Check if the Content-Length header is present
             try
             {
-                auto it = this->__req->header("Content-Length");
-
-                size_t content_length = std::stoul(it);
-
-                // If the range between body_ptr and buf + total_recv is less
-                // than the content length, then there are still data to read
-                // from the client socket.
-
-                size_t read_body = buf + total_recv - body_ptr;
-                std::string final_body(body_ptr, read_body);
-
-                if (read_body < content_length)
-                {
-                    // Decide how many more data to read
-
-                    size_t body_recv;
-                    size_t remaining = content_length - read_body;
-
-                    // Allocate memory for the body
-
-                    char *body_buf = new char[remaining + 1];
-
-                    for (body_recv = 0; body_recv < remaining;)
-                    {
-                        brecv = recv(
-                            client_socket, body_buf + body_recv, remaining, 0
-                        );
-
-                        handle_syscall_error(brecv, "recv");
-
-                        if (brecv == 0)
-                        {
-                            break;
-                        }
-
-                        body_recv += brecv;
-                        body_buf[body_recv] = '\0';
-                    }
-
-                    final_body.append(body_buf, body_recv);
-                    this->__req->set_data(this->__req->data() + body_buf);
-                    delete[] body_buf;
-                }
-
-                this->__req->set_body(final_body);
+                cl_str = this->__req->header("Content-Length");
             }
             catch (const std::out_of_range &e)
             {
-                std::cerr << "http_request::header(Content-Length): "
-                          << e.what() << std::endl;
-
-                handle_syscall_error(close(client_socket), "close");
-                continue;
+                this->__res->status(hfs::HTTP_STATUS_LENGTH_REQUIRED);
+                this->handle_error("Content-Length header is missing");
             }
+
+            // Check if the Content-Length header is a valid number
+            try
+            {
+                content_length = std::stoul(cl_str);
+            }
+            catch (const std::invalid_argument &e)
+            {
+                this->__res->status(hfs::HTTP_STATUS_BAD_REQUEST);
+                this->handle_error(
+                    "Content-Length header is not a valid number (got " +
+                    cl_str + ")"
+                );
+            }
+
+            // If the range between body_ptr and buf + total_recv is less
+            // than the content length, then there are still data to read
+            // from the client socket.
+
+            size_t read_body = buf + total_recv - body_ptr;
+            std::string final_body(body_ptr, read_body);
+
+            if (read_body < content_length)
+            {
+                // Decide how many more data to read
+
+                size_t body_recv;
+                size_t remaining = content_length - read_body;
+
+                // Allocate memory for the body
+
+                char *body_buf = new char[remaining + 1];
+
+                for (body_recv = 0; body_recv < remaining;)
+                {
+                    brecv =
+                        recv(client_socket, body_buf + body_recv, remaining, 0);
+
+                    handle_syscall_error(brecv, "recv");
+
+                    if (brecv == 0)
+                    {
+                        break;
+                    }
+
+                    body_recv += brecv;
+                    body_buf[body_recv] = '\0';
+                }
+
+                final_body.append(body_buf, body_recv);
+                this->__req->set_data(this->__req->data() + body_buf);
+                delete[] body_buf;
+            }
+
+            this->__req->set_body(final_body);
         }
 
         auto [router, handler] = hfs::http_router::get_route_handler(
@@ -226,10 +224,12 @@ blocking_http_server::start()
         {
             if (handler == nullptr)
             {
-                std::cerr << "No handler found for " << this->__req->method()
-                          << " " << this->__req->path() << std::endl;
-                close(client_socket);
-                continue;
+                this->__res->status(hfs::HTTP_STATUS_NOT_IMPLEMENTED);
+                this->handle_error(
+                    "Request is valid but the handler '" +
+                    std::string(this->__req->method()) + "' at resource '" +
+                    std::string(this->__req->path()) + "' is not implemented"
+                );
             }
 
             // Call the handler
@@ -237,11 +237,12 @@ blocking_http_server::start()
             {
                 handler(*this->__req, *this->__res);
             }
-            catch (const std::exception &e)
+            catch (const std::runtime_error &e)
             {
-                handle_error(
-                    client_socket, hfs::HTTP_STATUS_NOT_IMPLEMENTED, e.what()
-                );
+                if (this->__res->status() == hfs::HTTP_STATUS_OK)
+                    this->__res->status(hfs::HTTP_STATUS_INTERNAL_SERVER_ERROR);
+
+                this->handle_error(e.what());
             }
         }
 
@@ -263,11 +264,7 @@ blocking_http_server::start()
         {
             bsent = send(client_socket, resp_buf + bsent, resp_len - bsent, 0);
 
-            if (bsent == -1)
-            {
-                std::cerr << "send: " << std::strerror(errno) << std::endl;
-                break;
-            }
+            handle_syscall_error(bsent, "send");
 
             total_sent += (size_t)bsent;
         }
@@ -561,23 +558,17 @@ blocking_http_server::register_error_handler(
 }
 
 void
-blocking_http_server::handle_error(
-    int client_socket, hfs::http_status_code_t status_code,
-    const std::string &reason
-)
+blocking_http_server::handle_error(std::string_view reason)
 {
-    if (this->__req == nullptr)
-    {
-        handle_syscall_error(close(client_socket), "close");
-        return;
-    }
+    if (this->__req == nullptr || this->__res == nullptr)
+        throw std::runtime_error("Request or response object is null");
 
-    if (this->__res == nullptr)
-    {
-        this->__res = std::make_unique<http_response>(this->__static_path);
-    }
+    if (this->__req->status() == HTTP_STATUS_OK &&
+        this->__res->status() == HTTP_STATUS_OK)
+        this->__res->status(HTTP_STATUS_INTERNAL_SERVER_ERROR);
 
-    std::string path = std::string(this->__req->path());
+    std::string path                    = std::string(this->__req->path());
+    hfs::http_status_code_t status_code = this->__res->status();
 
     // Split the path by "/"
     std::vector<std::string> path_parts;
@@ -629,8 +620,8 @@ blocking_http_server::__server_static(int client_socket)
     {
         if (errno == ENOENT)
         {
+            this->__res->status(HTTP_STATUS_NOT_FOUND);
             this->handle_error(
-                client_socket, HTTP_STATUS_NOT_FOUND,
                 "Path not found: " + std::string(this->__req->path())
             );
 
@@ -648,15 +639,15 @@ blocking_http_server::__server_static(int client_socket)
     if (body == MAP_FAILED)
     {
         std::cerr << "mmap: " << std::strerror(errno) << std::endl;
-        close(fd);
-        close(client_socket);
+
+        handle_syscall_error(close(fd), "close");
+        handle_syscall_error(close(client_socket), "close");
         return -1;
     }
 
     handle_syscall_error(
         [&body]() { return body == MAP_FAILED ? -1 : 0; }(), "mmap"
     );
-
     handle_syscall_error(close(fd), "close");
 
     std::string ext = file_path.substr(file_path.find_last_of(".") + 1);

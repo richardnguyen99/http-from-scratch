@@ -30,13 +30,17 @@ http_router::not_implemented(
 )
 {
     (void)req;
-    (void)res;
-    throw std::runtime_error("Not implemented");
+    res.status(hfs::HTTP_STATUS_NOT_IMPLEMENTED);
+
+    throw std::runtime_error(
+        "The request is valid but the handler '" + std::string(req.method()) +
+        "' at resource '" + std::string(req.path()) + "' is not implemented"
+    );
 };
 
 void
 http_router::default_error_handler(
-    hfs::http_status_code_t status, const std::string &reason,
+    hfs::http_status_code_t status, std::string_view reason,
     const hfs::http_request &req, hfs::http_response &res
 )
 {
@@ -102,7 +106,7 @@ http_router::get_route_handler(
         }
     }
 
-    handler = router->handlers[req->method()];
+    handler = router->handlers[std::string(req->method())];
 
     return std::make_pair(router, handler);
 }

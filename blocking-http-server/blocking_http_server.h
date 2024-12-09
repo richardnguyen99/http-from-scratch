@@ -36,10 +36,7 @@ public:
     ) override;
 
     void
-    handle_error(
-        int client_socket, hfs::http_status_code_t status_code,
-        const std::string &reason
-    );
+    handle_error(std::string_view reason);
 
 private:
     std::unique_ptr<hfs::http_request> __req;

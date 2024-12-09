@@ -52,7 +52,7 @@ http_request::set_status(http_status_code_t status) noexcept
     this->__status = status;
 }
 
-const std::string &
+std::string_view
 http_request::method() const noexcept
 {
     return this->__method;
@@ -77,7 +77,7 @@ http_request::body() const noexcept
 }
 
 void
-http_request::set_body(const std::string &body) noexcept
+http_request::set_body(std::string_view body) noexcept
 {
     this->__body = body;
 }
@@ -103,7 +103,7 @@ http_request::header(const std::string &key) const
 const std::string &
 http_request::param(const std::string &key) const
 {
-    auto it = this->__params.find(key);
+    auto it = this->__params.find(std::string(key));
     if (it == this->__params.end())
     {
         throw std::out_of_range("http_request::param: Invalid parameter");
@@ -133,7 +133,7 @@ http_request::data() const noexcept
 }
 
 void
-http_request::set_data(const std::string &data) noexcept
+http_request::set_data(std::string_view data) noexcept
 {
     this->__buf = data;
 }
@@ -170,7 +170,10 @@ http_request::__parse_request_line(const std::string &line)
 
     if (!request_line.good())
     {
-        throw std::runtime_error("Invalid request line: " + line);
+        this->__status = HTTP_STATUS_BAD_REQUEST;
+        throw std::runtime_error(hfs::format_function_error(
+            __FILE__, __LINE__, "Invalid request line: " + line
+        ));
     }
 
     std::string uri;
@@ -181,26 +184,39 @@ http_request::__parse_request_line(const std::string &line)
 
     if (this->__method.empty() || uri.empty() || this->__version.empty())
     {
-        throw std::runtime_error("Invalid request line: " + this->__method);
+        this->__status = HTTP_STATUS_BAD_REQUEST;
+        throw std::runtime_error(hfs::format_function_error(
+            __FILE__, __LINE__, "Invalid request line: " + line
+        ));
     }
 
     if (!__check_method(this->__method))
     {
-        this->__status = HTTP_STATUS_NOT_IMPLEMENTED;
-        throw std::runtime_error(
-            "Unsupported request this->__method: " + this->__method
-        );
+        this->__status = HTTP_STATUS_METHOD_NOT_ALLOWED;
+        throw std::runtime_error(hfs::format_function_error(
+            __FILE__, __LINE__, "Unsupported HTTP method: " + this->__method
+        ));
     }
 
     if (this->__version != HTTP_SERVER_VERSION)
     {
         this->__status = HTTP_STATUS_HTTP_VERSION_NOT_SUPPORTED;
-        throw std::runtime_error(
-            "Unsupported HTTP this->__version: " + this->__version
-        );
+        throw std::runtime_error(hfs::format_function_error(
+            __FILE__, __LINE__, "Unsupported HTTP version: " + this->__version
+        ));
     }
 
-    this->__path = hfs::http_uri(uri);
+    try
+    {
+        this->__path = hfs::http_uri(uri);
+    }
+    catch (const std::runtime_error &e)
+    {
+        this->__status = HTTP_STATUS_BAD_REQUEST;
+        throw std::runtime_error(
+            hfs::format_function_error(__FILE__, __LINE__, e.what())
+        );
+    }
 }
 
 /**
@@ -215,7 +231,9 @@ http_request::__parse_headers(const std::string &line)
     auto pos = line.find(':');
     if (pos == std::string::npos)
     {
-        throw std::runtime_error("Invalid header: " + line);
+        throw std::runtime_error(hfs::format_function_error(
+            __FILE__, __LINE__, "Invalid header: " + line
+        ));
     }
 
     // Extract the header name and value
@@ -238,7 +256,14 @@ http_request::__parse()
     if (this->__buf.empty())
     {
         this->__status = HTTP_STATUS_BAD_REQUEST;
-        throw std::runtime_error("http_request::__parse: Invalid request");
+        throw std::runtime_error(
+#if defined(DEBUG)
+            "http_request::__parse: " +
+#else
+            "header parsing error: " +
+#endif
+            std::string("Empty request buffer")
+        );
     }
 
     std::string line;
@@ -253,16 +278,20 @@ http_request::__parse()
     }
     catch (const std::runtime_error &e)
     {
-        // In case of an unset error, set the status to `400 Bad Request`.
-        if (this->__status == HTTP_STATUS_OK)
-        {
-            this->__status = HTTP_STATUS_BAD_REQUEST;
-        }
+        this->__status = HTTP_STATUS_BAD_REQUEST;
 
         throw std::runtime_error(
-            "http_request::__parse: " + std::string(e.what())
+#if defined(DEBUG)
+            "http_request::__parse: " +
+#else
+            "header parsing error: " +
+#endif
+            std::string(e.what())
         );
     }
+
+    std::size_t hdr_field_start = line.size() + 2;
+    std::size_t hdr_field_end   = hdr_field_start;
 
     // Parse the headers. `\r\n` indicates the end of the header section.
     while (std::getline(stream, line) && !line.empty() && line != "\r")
@@ -270,19 +299,29 @@ http_request::__parse()
         try
         {
             this->__parse_headers(line);
+            hdr_field_end += line.size() + 2;
         }
         catch (const std::runtime_error &e)
         {
-            // In case of an unset error, set the status to `400 Bad Request`.
-            if (this->__status == HTTP_STATUS_OK)
-            {
-                this->__status = HTTP_STATUS_BAD_REQUEST;
-            }
+            this->__status = HTTP_STATUS_BAD_REQUEST;
 
             throw std::runtime_error(
-                "http_request::__parse: " + std::string(e.what())
+#if defined(DEBUG)
+                "http_request::__parse: " +
+#else
+                "header parsing error: " +
+#endif
+                std::string(e.what())
             );
         }
+    }
+
+    if (hdr_field_end - hdr_field_start >= hfs::HTTP_HDRSZ)
+    {
+        this->__status = HTTP_STATUS_REQUEST_HEADER_FIELDS_TOO_LARGE;
+        throw std::runtime_error(
+            "http_request::__parse: Request header fields too large"
+        );
     }
 }
 
